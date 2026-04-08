@@ -43,5 +43,10 @@ export function useDisplayMessages(sessionId: string | null) {
     await supabase.from('display_messages').insert({ session_id: sessionId, text })
   }
 
-  return { messages, latestMessage, loading, sendMessage }
+  async function clearDisplay() {
+    if (!sessionId) return
+    await supabase.from('display_messages').insert({ session_id: sessionId, text: '' })
+  }
+
+  return { messages, latestMessage, loading, sendMessage, clearDisplay }
 }

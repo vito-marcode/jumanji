@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useDisplayMessages } from '../hooks/useDisplayMessages'
@@ -8,15 +8,43 @@ import { TypewriterText } from '../components/TypewriterText'
 import { Spinner } from '../components/ui/Spinner'
 import type { Session } from '../types'
 
+function calcFontSize(text: string, boxSize: number): number {
+  if (boxSize <= 0) return 48
+  const testEl = document.createElement('div')
+  testEl.style.cssText = [
+    'position:absolute', 'visibility:hidden', 'pointer-events:none',
+    `width:${boxSize}px`, 'font-family:"Cinzel",serif',
+    'text-transform:uppercase', 'letter-spacing:0.1em',
+    'line-height:1.625', 'word-break:break-word',
+    'white-space:normal', 'text-align:center',
+  ].join(';')
+  testEl.textContent = text
+  document.body.appendChild(testEl)
+  let lo = 8, hi = 500, best = 16
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    testEl.style.fontSize = `${mid}px`
+    if (testEl.scrollHeight <= boxSize) { best = mid; lo = mid + 1 }
+    else hi = mid - 1
+  }
+  document.body.removeChild(testEl)
+  return best
+}
+
 export default function MainDisplay() {
   const { sessionCode } = useParams<{ sessionCode: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
   const [loadingSession, setLoadingSession] = useState(true)
+  const [headerVisible, setHeaderVisible] = useState(true)
 
   const { latestMessage } = useDisplayMessages(session?.id ?? null)
 
   const [displayText, setDisplayText] = useState<string | null>(null)
+  const [circleSize, setCircleSize] = useState(0)
+  const [fontSize, setFontSize] = useState(48)
+  const mainRef = useRef<HTMLElement>(null)
+  const circleSizeRef = useRef(0)
 
   useEffect(() => {
     if (!sessionCode) return
@@ -32,12 +60,48 @@ export default function MainDisplay() {
       })
   }, [sessionCode, navigate])
 
+  // Save session to localStorage when loaded
+  useEffect(() => {
+    if (!session) return
+    try {
+      const stored: { code: string; createdAt: string }[] = JSON.parse(
+        localStorage.getItem('jumanji_sessions') ?? '[]'
+      )
+      if (!stored.find(s => s.code === session.code)) {
+        stored.unshift({ code: session.code, createdAt: new Date().toISOString() })
+        localStorage.setItem('jumanji_sessions', JSON.stringify(stored.slice(0, 10)))
+      }
+    } catch {}
+  }, [session])
+
+  // Track main area size to size the circle
+  useEffect(() => {
+    if (!mainRef.current) return
+    const obs = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      const size = Math.min(width, height) * 0.92
+      circleSizeRef.current = size
+      setCircleSize(size)
+    })
+    obs.observe(mainRef.current)
+    return () => obs.disconnect()
+  }, [])
+
   useEffect(() => {
     if (!latestMessage) return
-    setDisplayText(latestMessage.text)
+    const text = latestMessage.text === '' ? null : latestMessage.text
+    if (text && circleSizeRef.current > 0) {
+      setFontSize(calcFontSize(text, circleSizeRef.current * 0.65))
+    }
+    setDisplayText(text)
   }, [latestMessage?.id])
 
-  const isEmpty = !displayText
+  // Recalculate font when circle resizes (window resize / header toggle)
+  useEffect(() => {
+    if (!displayText || circleSize === 0) return
+    setFontSize(calcFontSize(displayText, circleSize * 0.65))
+  }, [circleSize])
+
 
   if (loadingSession) {
     return (
@@ -54,50 +118,73 @@ export default function MainDisplay() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
       </div>
 
+      {/* Show button — only when header is hidden */}
+      {!headerVisible && (
+        <button
+          onClick={() => setHeaderVisible(true)}
+          className="absolute top-3 right-3 z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600"
+        >
+          ▼ show
+        </button>
+      )}
+
       {/* Top bar — QR + code */}
-      <header className="relative z-10 flex items-start justify-between gap-6 p-6 border-b border-jungle-800">
-        <div className="flex flex-col gap-1">
-          <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
-          <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
-        </div>
-        <div className="flex items-center gap-6 flex-wrap justify-end">
-          <SessionCodeBadge code={sessionCode ?? ''} />
-          <QRCodeDisplay sessionCode={sessionCode ?? ''} />
-        </div>
-      </header>
+      {headerVisible && (
+        <header className="relative z-10 flex items-start justify-between gap-6 p-6 border-b border-jungle-800 animate-fade-in">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
+            <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
+            <button
+              onClick={() => navigate('/')}
+              className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2 text-left transition-colors"
+            >
+              ← Home
+            </button>
+          </div>
+          <div className="flex items-center gap-6 flex-wrap justify-end">
+            <SessionCodeBadge code={sessionCode ?? ''} />
+            <QRCodeDisplay sessionCode={sessionCode ?? ''} />
+            <button
+              onClick={() => setHeaderVisible(false)}
+              className="text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors self-start mt-1"
+            >
+              ▲ hide
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Main message area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-8 py-12">
-        {isEmpty && (
-          <div className="text-center animate-fade-in">
-            <p className="font-cinzel text-jungle-400 text-2xl tracking-widest animate-pulse">
-              Waiting for the jungle to speak…
-            </p>
-            <p className="text-jungle-600 text-sm mt-3 font-cinzel">
-              Players can join using the code or QR above
-            </p>
-          </div>
-        )}
-
-        {displayText && (
-          <p className="font-cinzel text-4xl md:text-6xl leading-loose text-center max-w-4xl text-gold-300 uppercase tracking-widest">
-            <TypewriterText
-              text={displayText}
-              charDelay={120}
-            />
-          </p>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 p-4 border-t border-jungle-800 flex justify-between items-center">
-        <button
-          onClick={() => navigate('/')}
-          className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel transition-colors"
+      <main ref={mainRef} className="relative z-10 flex-1 flex items-center justify-center">
+        <div
+          className="relative flex items-center justify-center rounded-full transition-shadow duration-700"
+          style={{
+            width: circleSize || undefined,
+            height: circleSize || undefined,
+            border: circleSize ? '1px solid rgba(161,120,40,0.18)' : undefined,
+            boxShadow: displayText && circleSize
+              ? '0 0 80px rgba(161,120,40,0.10), 0 0 200px rgba(161,120,40,0.05), inset 0 0 80px rgba(161,120,40,0.05)'
+              : undefined,
+          }}
         >
-          End Session
-        </button>
-      </footer>
+          <div
+            className="flex items-center justify-center"
+            style={{
+              width: circleSize ? circleSize * 0.65 : undefined,
+              height: circleSize ? circleSize * 0.65 : undefined,
+            }}
+          >
+            {displayText && (
+              <p
+                className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
+                style={{ fontSize }}
+              >
+                <TypewriterText text={displayText} charDelay={120} />
+              </p>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

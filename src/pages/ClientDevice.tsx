@@ -23,9 +23,9 @@ export default function ClientDevice() {
   const [creating, setCreating] = useState(false)
   const [sendFeedback, setSendFeedback] = useState(false)
 
-  const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption } =
+  const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption, updateOption } =
     useCollections(session?.id ?? null)
-  const { sendMessage } = useDisplayMessages(session?.id ?? null)
+  const { sendMessage, clearDisplay } = useDisplayMessages(session?.id ?? null)
 
   useEffect(() => {
     if (!sessionCode) return
@@ -149,9 +149,20 @@ export default function ClientDevice() {
                 await addOption(col.id, text)
               }}
               onDeleteOption={(optId) => deleteOption(col.id, optId)}
+              onUpdateOption={async (optId, text) => { await updateOption(col.id, optId, text) }}
             />
           ))}
         </div>
+      </div>
+
+      {/* Clear screen footer */}
+      <div className="sticky bottom-0 z-10 px-4 py-3 bg-jungle-950/90 backdrop-blur-sm border-t border-jungle-800">
+        <button
+          onClick={() => clearDisplay()}
+          className="w-full py-3 rounded border border-gold-800 bg-gold-950/40 hover:bg-gold-900/20 hover:border-gold-600 text-gold-400 hover:text-gold-300 text-sm font-cinzel uppercase tracking-widest transition-colors active:scale-95"
+        >
+          🧹 Clear main screen
+        </button>
       </div>
 
       {/* New Collection Modal */}
