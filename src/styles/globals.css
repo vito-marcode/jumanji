@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-jungle-950 text-jungle-50 antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-jungle-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-jungle-600 rounded-full;
+  }
+}
+
+@layer utilities {
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(0, 255, 65, 0.8), 0 0 20px rgba(0, 255, 65, 0.4);
+  }
+
+  .text-glow-gold {
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+
+  .border-glow-green {
+    box-shadow: 0 0 8px 1px rgba(0, 255, 65, 0.4), inset 0 0 8px 1px rgba(0, 255, 65, 0.1);
+  }
+
+  .border-glow-gold {
+    box-shadow: 0 0 8px 1px rgba(255, 215, 0, 0.4), inset 0 0 8px 1px rgba(255, 215, 0, 0.1);
+  }
+}
