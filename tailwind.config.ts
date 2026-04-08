@@ -46,10 +46,12 @@ export default {
         glow_lg:    '0 0 20px 6px rgba(0,255,65,0.4)',
       },
       animation: {
-        'pulse-glow':  'pulseGlow 2s ease-in-out infinite',
-        'fade-in':     'fadeIn 0.4s ease-out forwards',
-        'slide-up':    'slideUp 0.3s ease-out forwards',
-        'typewriter':  'none',
+        'pulse-glow':      'pulseGlow 2s ease-in-out infinite',
+        'fade-in':         'fadeIn 0.4s ease-out forwards',
+        'slide-up':        'slideUp 0.3s ease-out forwards',
+        'typewriter':      'none',
+        'materialize':     'materialize 6s ease-out forwards',
+        'pulse-glow-gold': 'pulseGlowGold 3s ease-in-out infinite',
       },
       keyframes: {
         pulseGlow: {
@@ -63,6 +65,18 @@ export default {
         slideUp: {
           from: { opacity: '0', transform: 'translateY(12px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        materialize: {
+          '0%':   { filter: 'blur(18px)', opacity: '0',    textShadow: 'none',                                                              transform: 'translateZ(0)' },
+          '40%':  { filter: 'blur(7px)',  opacity: '0.5',                                                                                    transform: 'translateZ(0)' },
+          '65%':  { filter: 'blur(3px)',  opacity: '0.75',                                                                                   transform: 'translateZ(0)' },
+          '80%':  { filter: 'blur(1.5px)',opacity: '0.88',                                                                                   transform: 'translateZ(0)' },
+          '90%':  { filter: 'blur(0.5px)',opacity: '0.95',                                                                                   transform: 'translateZ(0)' },
+          '100%': { filter: 'blur(0px)',  opacity: '1',    textShadow: '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)', transform: 'translateZ(0)' },
+        },
+        pulseGlowGold: {
+          '0%, 100%': { textShadow: '0 0 10px rgba(249,204,106,0.5), 0 0 25px rgba(249,204,106,0.25)' },
+          '50%':      { textShadow: '0 0 22px rgba(249,204,106,0.95), 0 0 50px rgba(249,204,106,0.5), 0 0 80px rgba(249,204,106,0.2)' },
         },
       },
     },

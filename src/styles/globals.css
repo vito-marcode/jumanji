@@ -38,4 +38,8 @@
   .border-glow-gold {
     box-shadow: 0 0 8px 1px rgba(255, 215, 0, 0.4), inset 0 0 8px 1px rgba(255, 215, 0, 0.1);
   }
+
+  .text-glow-gold-warm {
+    text-shadow: 0 0 10px rgba(249, 204, 106, 0.7), 0 0 30px rgba(249, 204, 106, 0.4), 0 0 60px rgba(249, 204, 106, 0.15);
+  }
 }

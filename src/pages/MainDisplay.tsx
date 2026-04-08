@@ -5,7 +5,6 @@ import { useDisplayMessages } from '../hooks/useDisplayMessages'
 import { QRCodeDisplay } from '../components/QRCodeDisplay'
 import { SessionCodeBadge } from '../components/SessionCodeBadge'
 import { TypewriterText } from '../components/TypewriterText'
-import { MessageFeed } from '../components/MessageFeed'
 import { Spinner } from '../components/ui/Spinner'
 import type { Session } from '../types'
 
@@ -15,12 +14,9 @@ export default function MainDisplay() {
   const [session, setSession] = useState<Session | null>(null)
   const [loadingSession, setLoadingSession] = useState(true)
 
-  const { messages, latestMessage } = useDisplayMessages(session?.id ?? null)
+  const { latestMessage } = useDisplayMessages(session?.id ?? null)
 
-  // Track which message is currently being typewritten
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [typewriterText, setTypewriterText] = useState<string | null>(null)
-  const [historyMessages, setHistoryMessages] = useState(messages)
+  const [displayText, setDisplayText] = useState<string | null>(null)
 
   useEffect(() => {
     if (!sessionCode) return
@@ -36,22 +32,12 @@ export default function MainDisplay() {
       })
   }, [sessionCode, navigate])
 
-  // When a new message arrives, typewrite it
   useEffect(() => {
     if (!latestMessage) return
-    setActiveId(latestMessage.id)
-    setTypewriterText(latestMessage.text)
-    // Show all previous messages (minus the active one) in feed
-    setHistoryMessages(messages.filter((m) => m.id !== latestMessage.id))
+    setDisplayText(latestMessage.text)
   }, [latestMessage?.id])
 
-  // After typewriting is done, move message into history
-  function handleTypewriterComplete() {
-    if (!latestMessage) return
-    setHistoryMessages(messages)
-    setTypewriterText(null)
-    setActiveId(null)
-  }
+  const isEmpty = !displayText
 
   if (loadingSession) {
     return (
@@ -74,7 +60,6 @@ export default function MainDisplay() {
           <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
           <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
         </div>
-
         <div className="flex items-center gap-6 flex-wrap justify-end">
           <SessionCodeBadge code={sessionCode ?? ''} />
           <QRCodeDisplay sessionCode={sessionCode ?? ''} />
@@ -82,9 +67,9 @@ export default function MainDisplay() {
       </header>
 
       {/* Main message area */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 py-12 gap-8">
-        {!typewriterText && messages.length === 0 && (
-          <div className="text-center">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-8 py-12">
+        {isEmpty && (
+          <div className="text-center animate-fade-in">
             <p className="font-cinzel text-jungle-400 text-2xl tracking-widest animate-pulse">
               Waiting for the jungle to speak…
             </p>
@@ -94,32 +79,18 @@ export default function MainDisplay() {
           </div>
         )}
 
-        {/* Typewriter — active message */}
-        {typewriterText && (
-          <div className="text-center max-w-2xl">
-            <p className="font-mono text-2xl md:text-4xl leading-relaxed">
-              <TypewriterText
-                text={typewriterText}
-                speed={40}
-                onComplete={handleTypewriterComplete}
-              />
-            </p>
-          </div>
-        )}
-
-        {/* Message history */}
-        {historyMessages.length > 0 && (
-          <div className="w-full max-w-2xl">
-            <MessageFeed messages={historyMessages} activeMessageId={activeId ?? undefined} />
-          </div>
+        {displayText && (
+          <p className="font-cinzel text-4xl md:text-6xl leading-loose text-center max-w-4xl text-gold-300 uppercase tracking-widest">
+            <TypewriterText
+              text={displayText}
+              charDelay={120}
+            />
+          </p>
         )}
       </main>
 
       {/* Footer */}
       <footer className="relative z-10 p-4 border-t border-jungle-800 flex justify-between items-center">
-        <p className="text-jungle-700 text-xs font-cinzel">
-          {messages.length} message{messages.length !== 1 ? 's' : ''} received
-        </p>
         <button
           onClick={() => navigate('/')}
           className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel transition-colors"
