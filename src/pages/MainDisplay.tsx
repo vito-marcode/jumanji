@@ -17,7 +17,8 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
     `width:${boxWidth}px`, 'font-family:"Cinzel",serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
-    'line-height:1.625', 'white-space:normal', 'text-align:center',
+    'line-height:1.625', 'word-break:break-word',
+    'white-space:normal', 'text-align:center',
   ].join(';')
   testEl.textContent = text
   document.body.appendChild(testEl)
@@ -25,12 +26,8 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
     testEl.style.fontSize = `${mid}px`
-    // Check both axes: height must fit in box, and no word wider than box
-    if (testEl.scrollHeight <= boxHeight && testEl.scrollWidth <= boxWidth + 1) {
-      best = mid; lo = mid + 1
-    } else {
-      hi = mid - 1
-    }
+    if (testEl.scrollHeight <= boxHeight) { best = mid; lo = mid + 1 }
+    else hi = mid - 1
   }
   document.body.removeChild(testEl)
   return best
@@ -162,7 +159,7 @@ export default function MainDisplay() {
       {/* Main message area */}
       <main ref={mainRef} className="relative z-10 flex-1 flex items-center justify-center">
         <div
-          className="relative flex items-center justify-center rounded-full overflow-hidden transition-shadow duration-700"
+          className="relative flex items-center justify-center rounded-full transition-shadow duration-700"
           style={{
             width: circleSize || undefined,
             height: circleSize || undefined,
