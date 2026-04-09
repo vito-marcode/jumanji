@@ -75,11 +75,12 @@ export function CollectionCard({
       >
         <div className="flex items-center justify-between gap-2">
           <button
-            className="flex-1 text-left"
+            className="flex-1 text-left flex items-center gap-2"
             onClick={() => { onSelect(); setExpanded(true) }}
           >
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded border border-jungle-600 bg-jungle-800 text-jungle-300 text-xs leading-none shrink-0">▶</span>
             <span className="font-cinzel text-jungle-100 font-semibold">{collection.name}</span>
-            <span className="ml-2 text-xs text-jungle-500">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-jungle-500">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
           </button>
 
           <div className="flex gap-1">

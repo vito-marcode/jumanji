@@ -12,24 +12,45 @@ import type { Session } from '../types'
 // boxWidth = max text width, boxHeight = max text height (both = circleSize * 0.7)
 function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWidth): number {
   if (boxWidth <= 0 || boxHeight <= 0) return 48
-  const testEl = document.createElement('div')
-  testEl.style.cssText = [
+
+  // Wrapping element to measure height
+  const wrapEl = document.createElement('div')
+  wrapEl.style.cssText = [
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
     `width:${boxWidth}px`, 'font-family:"Cinzel",serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
     'line-height:1.625', 'word-break:break-word',
     'white-space:normal', 'text-align:center',
   ].join(';')
-  testEl.textContent = text
-  document.body.appendChild(testEl)
+  wrapEl.textContent = text
+  document.body.appendChild(wrapEl)
+
+  // No-wrap element to measure true rendered width (avoids letter-spacing scrollWidth artifacts)
+  const measureEl = document.createElement('span')
+  measureEl.style.cssText = [
+    'position:absolute', 'visibility:hidden', 'pointer-events:none',
+    'white-space:nowrap', 'font-family:"Cinzel",serif',
+    'text-transform:uppercase', 'letter-spacing:0.1em',
+  ].join(';')
+  measureEl.textContent = text
+  document.body.appendChild(measureEl)
+
+  const isMultiWord = text.includes(' ')
   let lo = 8, hi = 600, best = 16
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
-    testEl.style.fontSize = `${mid}px`
-    if (testEl.scrollHeight <= boxHeight) { best = mid; lo = mid + 1 }
+    wrapEl.style.fontSize = `${mid}px`
+    measureEl.style.fontSize = `${mid}px`
+    const fitsHeight = wrapEl.scrollHeight <= boxHeight
+    // For single words (can't wrap): also check natural rendered width.
+    // For multi-word text: wrapping handles width; only height matters.
+    const fitsWidth = isMultiWord || measureEl.getBoundingClientRect().width <= boxWidth
+    if (fitsHeight && fitsWidth) { best = mid; lo = mid + 1 }
     else hi = mid - 1
   }
-  document.body.removeChild(testEl)
+
+  document.body.removeChild(wrapEl)
+  document.body.removeChild(measureEl)
   return best
 }
 
@@ -90,16 +111,25 @@ export default function MainDisplay() {
   useEffect(() => {
     if (!latestMessage) return
     const text = latestMessage.text === '' ? null : latestMessage.text
-    if (text && circleSizeRef.current > 0) {
-      setFontSize(calcFontSize(text, circleSizeRef.current * 0.7))
+    if (!text) {
+      setDisplayText(null)
+      return
     }
-    setDisplayText(text)
+    // Clear old text first, then show new message after a short pause
+    setDisplayText(null)
+    const timer = setTimeout(() => {
+      if (circleSizeRef.current > 0) {
+        setFontSize(calcFontSize(text, circleSizeRef.current * 0.707))
+      }
+      setDisplayText(text)
+    }, 400)
+    return () => clearTimeout(timer)
   }, [latestMessage?.id])
 
   // Recalculate font when circle resizes (window resize / header toggle)
   useEffect(() => {
     if (!displayText || circleSize === 0) return
-    setFontSize(calcFontSize(displayText, circleSize * 0.7))
+    setFontSize(calcFontSize(displayText, circleSize * 0.707))
   }, [circleSize])
 
 
@@ -181,7 +211,7 @@ export default function MainDisplay() {
               className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
               style={{ fontSize }}
             >
-              <TypewriterText text={displayText} charDelay={40} />
+              <TypewriterText text={displayText} charDelay={120} />
             </p>
           )}
         </div>

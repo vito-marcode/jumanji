@@ -6,7 +6,7 @@ interface TypewriterTextProps {
   onComplete?: () => void
 }
 
-export function TypewriterText({ text, charDelay = 40, onComplete }: TypewriterTextProps) {
+export function TypewriterText({ text, charDelay = 120, onComplete }: TypewriterTextProps) {
   const [revealedCount, setRevealedCount] = useState(0)
   const onCompleteRef = useRef(onComplete)
 

@@ -3,7 +3,7 @@ import { Button } from './ui/Button'
 import { Card } from './ui/Card'
 import type { Collection, Option } from '../types'
 
-type Mode = 'manual' | 'segment' | 'random'
+type Mode = 'manual' | 'random'
 type RevealPhase = 'idle' | 'suspense' | 'revealed'
 
 interface SelectionModePanelProps {
@@ -26,6 +26,14 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
 
   const options = collection.options ?? []
 
+  // Reset selection when collection changes
+  useEffect(() => {
+    setSelectedIds(new Set((collection.options ?? []).map(o => o.id)))
+    setRolledOption(null)
+    setRevealPhase('idle')
+    if (revealTimer.current) clearTimeout(revealTimer.current)
+  }, [collection.id])
+
   // Clean up timer on unmount
   useEffect(() => () => { if (revealTimer.current) clearTimeout(revealTimer.current) }, [])
 
@@ -39,18 +47,19 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
     const picked = pickRandom(pool)
     if (!picked) return
     if (revealTimer.current) clearTimeout(revealTimer.current)
-    setRolledOption(picked)
-    setRevealPhase('suspense')
+    // Hide previous result first to avoid flash of old revealed state
+    setRolledOption(null)
+    setRevealPhase('idle')
     onSend(picked.text) // send to main display immediately
-    revealTimer.current = setTimeout(() => setRevealPhase('revealed'), REVEAL_DELAY_MS)
+    revealTimer.current = setTimeout(() => {
+      setRolledOption(picked)
+      setRevealPhase('suspense')
+      revealTimer.current = setTimeout(() => setRevealPhase('revealed'), REVEAL_DELAY_MS)
+    }, 50)
   }
 
   function rollSegment() {
     rollAndReveal(options.filter(o => selectedIds.has(o.id)))
-  }
-
-  function rollAll() {
-    rollAndReveal(options)
   }
 
   function toggleOption(id: string) {
@@ -88,8 +97,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
 
   const tabs: { id: Mode; label: string }[] = [
     { id: 'manual',  label: 'Manual' },
-    { id: 'segment', label: 'Random Segment' },
-    { id: 'random',  label: 'Random All' },
+    { id: 'random', label: 'Random' },
   ]
 
   return (
@@ -131,7 +139,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
       )}
 
       {/* ── Random Segment ── */}
-      {mode === 'segment' && (
+      {mode === 'random' && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-cinzel text-jungle-400 uppercase tracking-wider">
@@ -189,26 +197,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
         </div>
       )}
 
-      {/* ── Random All ── */}
-      {mode === 'random' && (
-        <div className="flex flex-col gap-4">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={rollAll}
-            disabled={options.length === 0 || revealPhase === 'suspense'}
-            className="w-full"
-          >
-            🎲 Roll the Dice
-          </Button>
-          {options.length === 0 && (
-            <p className="text-jungle-500 text-sm text-center">No options yet.</p>
-          )}
-          {rolledOption && revealPhase !== 'idle' && (
-            <RandomReveal option={rolledOption} phase={revealPhase} />
-          )}
-        </div>
-      )}
+
     </Card>
   )
 }

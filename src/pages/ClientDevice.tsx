@@ -140,7 +140,7 @@ export default function ClientDevice() {
               key={col.id}
               collection={col}
               isSelected={selectedCollection?.id === col.id}
-              onSelect={() => setSelectedCollection(col)}
+              onSelect={() => { setSelectedCollection(col); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               onDelete={() => {
                 deleteCollection(col.id)
                 if (selectedCollection?.id === col.id) setSelectedCollection(null)
