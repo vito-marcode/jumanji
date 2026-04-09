@@ -108,12 +108,20 @@ export default function ClientDevice() {
             Session: {sessionCode}
           </p>
         </div>
-        <button
-          onClick={() => navigate('/')}
-          className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel transition-colors"
-        >
-          Leave
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={tutorial.restart}
+            className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest transition-colors"
+          >
+            ? Help
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel transition-colors"
+          >
+            Leave
+          </button>
+        </div>
       </header>
 
       {/* Sent feedback toast */}

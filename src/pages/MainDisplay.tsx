@@ -195,12 +195,20 @@ export default function MainDisplay() {
           <div className="flex items-center gap-6 flex-wrap justify-end">
             <SessionCodeBadge code={sessionCode ?? ''} />
             <QRCodeDisplay sessionCode={sessionCode ?? ''} />
-            <button
-              onClick={() => setHeaderVisible(false)}
-              className="text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors self-start mt-1"
-            >
-              ▲ hide
-            </button>
+            <div className="flex items-center gap-2 self-start mt-1">
+              <button
+                onClick={tutorial.restart}
+                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+              >
+                ? Help
+              </button>
+              <button
+                onClick={() => setHeaderVisible(false)}
+                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+              >
+                ▲ hide
+              </button>
+            </div>
           </div>
         </header>
       )}

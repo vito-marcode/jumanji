@@ -196,6 +196,13 @@ export default function Landing() {
         <p className="text-jungle-600 text-xs text-center font-cinzel">
           A world you can only survive together
         </p>
+
+        <button
+          onClick={tutorial.restart}
+          className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest transition-colors"
+        >
+          ? Help
+        </button>
       </div>
 
       {pendingRemoveCode && (

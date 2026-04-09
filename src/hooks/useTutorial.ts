@@ -11,6 +11,7 @@ export interface TutorialState {
   prev: () => void
   skip: () => void
   complete: () => void
+  restart: () => void
 }
 
 function getKey(page: TutorialPage): string {
@@ -56,6 +57,11 @@ export function useTutorial(page: TutorialPage, totalSteps: number): TutorialSta
     }
   }
 
+  const restart = () => {
+    setCurrentStep(0)
+    setIsVisible(true)
+  }
+
   return {
     isVisible,
     currentStep,
@@ -65,5 +71,6 @@ export function useTutorial(page: TutorialPage, totalSteps: number): TutorialSta
     prev,
     skip: hide,
     complete: hide,
+    restart,
   }
 }
