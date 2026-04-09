@@ -181,7 +181,7 @@ export default function MainDisplay() {
                 className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
                 style={{ fontSize }}
               >
-                <TypewriterText text={displayText} charDelay={120} />
+                <TypewriterText text={displayText} charDelay={40} />
               </p>
             )}
           </div>
