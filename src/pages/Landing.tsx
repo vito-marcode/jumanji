@@ -5,6 +5,26 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Spinner } from '../components/ui/Spinner'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
+import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
+import { useTutorial } from '../hooks/useTutorial'
+
+const LANDING_STEPS: TutorialStep[] = [
+  {
+    icon: '🌿',
+    title: 'Welcome to Jumanji',
+    description: 'A real-time display app — one screen shows what\'s happening, while everyone else controls it from their device.',
+  },
+  {
+    icon: '🎮',
+    title: 'Create a Session',
+    description: 'Hit \'Be the Main\' to open a new session and get a shareable code. Your screen becomes the jungle display.',
+  },
+  {
+    icon: '🔗',
+    title: 'Join a Session',
+    description: 'Got a code? Enter it here to join as a client. You\'ll be able to send options to the main display.',
+  },
+]
 
 interface StoredSession {
   code: string
@@ -23,6 +43,7 @@ function timeAgo(iso: string): string {
 export default function Landing() {
   const navigate = useNavigate()
   const { createSession, joinSession, loading, error } = useSession()
+  const tutorial = useTutorial('landing', LANDING_STEPS.length)
   const [code, setCode] = useState('')
   const [view, setView] = useState<'home' | 'join'>('home')
   const [recentSessions, setRecentSessions] = useState<StoredSession[]>([])
@@ -184,6 +205,18 @@ export default function Landing() {
           confirmLabel="Remove"
           onConfirm={() => { removeSession(pendingRemoveCode); setPendingRemoveCode(null) }}
           onCancel={() => setPendingRemoveCode(null)}
+        />
+      )}
+
+      {tutorial.isVisible && (
+        <TutorialOverlay
+          steps={LANDING_STEPS}
+          currentStep={tutorial.currentStep}
+          isFirstStep={tutorial.isFirstStep}
+          isLastStep={tutorial.isLastStep}
+          onNext={tutorial.next}
+          onPrev={tutorial.prev}
+          onSkip={tutorial.skip}
         />
       )}
     </div>

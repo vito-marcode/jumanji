@@ -6,7 +6,27 @@ import { QRCodeDisplay } from '../components/QRCodeDisplay'
 import { SessionCodeBadge } from '../components/SessionCodeBadge'
 import { TypewriterText } from '../components/TypewriterText'
 import { Spinner } from '../components/ui/Spinner'
+import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
+import { useTutorial } from '../hooks/useTutorial'
 import type { Session } from '../types'
+
+const MAIN_STEPS: TutorialStep[] = [
+  {
+    icon: '🖥️',
+    title: 'The Main Display',
+    description: 'This is your jungle screen. Text sent from client devices appears here with a dramatic typewriter effect.',
+  },
+  {
+    icon: '📋',
+    title: 'Share the Code',
+    description: 'The session code (top-left) lets others join as clients. Click it to copy, then share!',
+  },
+  {
+    icon: '📱',
+    title: 'QR Code',
+    description: 'The QR code (top-right) lets anyone scan and join instantly on their phone. No typing needed.',
+  },
+]
 
 // Fit text inside the inscribed square of the circle.
 // boxWidth = max text width, boxHeight = max text height (both = circleSize * 0.7)
@@ -60,6 +80,7 @@ export default function MainDisplay() {
   const [session, setSession] = useState<Session | null>(null)
   const [loadingSession, setLoadingSession] = useState(true)
   const [headerVisible, setHeaderVisible] = useState(true)
+  const tutorial = useTutorial('main', MAIN_STEPS.length)
 
   const { latestMessage } = useDisplayMessages(session?.id ?? null)
 
@@ -219,6 +240,18 @@ export default function MainDisplay() {
 
       {/* Spacer to keep flex layout intact */}
       <main className="relative flex-1" />
+
+      {tutorial.isVisible && (
+        <TutorialOverlay
+          steps={MAIN_STEPS}
+          currentStep={tutorial.currentStep}
+          isFirstStep={tutorial.isFirstStep}
+          isLastStep={tutorial.isLastStep}
+          onNext={tutorial.next}
+          onPrev={tutorial.prev}
+          onSkip={tutorial.skip}
+        />
+      )}
     </div>
   )
 }

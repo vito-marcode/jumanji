@@ -9,7 +9,32 @@ import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { Spinner } from '../components/ui/Spinner'
+import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
+import { useTutorial } from '../hooks/useTutorial'
 import type { Collection, Session } from '../types'
+
+const CLIENT_STEPS: TutorialStep[] = [
+  {
+    icon: '📚',
+    title: 'Your Collections',
+    description: 'Collections are groups of options. Create as many as you need — topics, names, challenges, anything.',
+  },
+  {
+    icon: '✏️',
+    title: 'Add Options',
+    description: 'Expand a collection to add, edit, or delete options. Each option can be sent to the main display.',
+  },
+  {
+    icon: '👆',
+    title: 'Manual Mode',
+    description: 'Tap any option to send it instantly to the main display. Great for direct, deliberate choices.',
+  },
+  {
+    icon: '🎲',
+    title: 'Random Mode',
+    description: 'Switch to Random, select options with checkboxes, then roll! A random pick is revealed with suspense.',
+  },
+]
 
 export default function ClientDevice() {
   const { sessionCode } = useParams<{ sessionCode: string }>()
@@ -22,6 +47,7 @@ export default function ClientDevice() {
   const [newCollectionName, setNewCollectionName] = useState('')
   const [creating, setCreating] = useState(false)
   const [sendFeedback, setSendFeedback] = useState(false)
+  const tutorial = useTutorial('client', CLIENT_STEPS.length)
 
   const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption, updateOption } =
     useCollections(session?.id ?? null)
@@ -198,6 +224,18 @@ export default function ClientDevice() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {tutorial.isVisible && (
+        <TutorialOverlay
+          steps={CLIENT_STEPS}
+          currentStep={tutorial.currentStep}
+          isFirstStep={tutorial.isFirstStep}
+          isLastStep={tutorial.isLastStep}
+          onNext={tutorial.next}
+          onPrev={tutorial.prev}
+          onSkip={tutorial.skip}
+        />
       )}
     </div>
   )
