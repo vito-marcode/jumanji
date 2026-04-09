@@ -8,24 +8,29 @@ import { TypewriterText } from '../components/TypewriterText'
 import { Spinner } from '../components/ui/Spinner'
 import type { Session } from '../types'
 
-function calcFontSize(text: string, boxSize: number): number {
-  if (boxSize <= 0) return 48
+// Fit text inside the inscribed square of the circle.
+// boxWidth = max text width, boxHeight = max text height (both = circleSize * 0.7)
+function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWidth): number {
+  if (boxWidth <= 0 || boxHeight <= 0) return 48
   const testEl = document.createElement('div')
   testEl.style.cssText = [
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
-    `width:${boxSize}px`, 'font-family:"Cinzel",serif',
+    `width:${boxWidth}px`, 'font-family:"Cinzel",serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
-    'line-height:1.625', 'word-break:break-word',
-    'white-space:normal', 'text-align:center',
+    'line-height:1.625', 'white-space:normal', 'text-align:center',
   ].join(';')
   testEl.textContent = text
   document.body.appendChild(testEl)
-  let lo = 8, hi = 500, best = 16
+  let lo = 8, hi = 600, best = 16
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
     testEl.style.fontSize = `${mid}px`
-    if (testEl.scrollHeight <= boxSize) { best = mid; lo = mid + 1 }
-    else hi = mid - 1
+    // Check both axes: height must fit in box, and no word wider than box
+    if (testEl.scrollHeight <= boxHeight && testEl.scrollWidth <= boxWidth + 1) {
+      best = mid; lo = mid + 1
+    } else {
+      hi = mid - 1
+    }
   }
   document.body.removeChild(testEl)
   return best
@@ -79,7 +84,7 @@ export default function MainDisplay() {
     if (!mainRef.current) return
     const obs = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect
-      const size = Math.min(width, height) * 0.92
+      const size = Math.min(width, height) * 0.97
       circleSizeRef.current = size
       setCircleSize(size)
     })
@@ -91,7 +96,7 @@ export default function MainDisplay() {
     if (!latestMessage) return
     const text = latestMessage.text === '' ? null : latestMessage.text
     if (text && circleSizeRef.current > 0) {
-      setFontSize(calcFontSize(text, circleSizeRef.current * 0.65))
+      setFontSize(calcFontSize(text, circleSizeRef.current * 0.7))
     }
     setDisplayText(text)
   }, [latestMessage?.id])
@@ -99,7 +104,7 @@ export default function MainDisplay() {
   // Recalculate font when circle resizes (window resize / header toggle)
   useEffect(() => {
     if (!displayText || circleSize === 0) return
-    setFontSize(calcFontSize(displayText, circleSize * 0.65))
+    setFontSize(calcFontSize(displayText, circleSize * 0.7))
   }, [circleSize])
 
 
@@ -157,7 +162,7 @@ export default function MainDisplay() {
       {/* Main message area */}
       <main ref={mainRef} className="relative z-10 flex-1 flex items-center justify-center">
         <div
-          className="relative flex items-center justify-center rounded-full transition-shadow duration-700"
+          className="relative flex items-center justify-center rounded-full overflow-hidden transition-shadow duration-700"
           style={{
             width: circleSize || undefined,
             height: circleSize || undefined,
@@ -170,8 +175,8 @@ export default function MainDisplay() {
           <div
             className="flex items-center justify-center"
             style={{
-              width: circleSize ? circleSize * 0.65 : undefined,
-              height: circleSize ? circleSize * 0.65 : undefined,
+              width: circleSize ? circleSize * 0.7 : undefined,
+              height: circleSize ? circleSize * 0.7 : undefined,
             }}
           >
             {displayText && (
