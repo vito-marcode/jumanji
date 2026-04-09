@@ -45,7 +45,6 @@ export default function MainDisplay() {
   const [displayText, setDisplayText] = useState<string | null>(null)
   const [circleSize, setCircleSize] = useState(0)
   const [fontSize, setFontSize] = useState(48)
-  const mainRef = useRef<HTMLElement>(null)
   const circleSizeRef = useRef(0)
 
   useEffect(() => {
@@ -76,17 +75,16 @@ export default function MainDisplay() {
     } catch {}
   }, [session])
 
-  // Track main area size to size the circle
+  // Track full viewport size to size the circle
   useEffect(() => {
-    if (!mainRef.current) return
-    const obs = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect
-      const size = Math.min(width, height) * 0.97
+    const update = () => {
+      const size = Math.min(window.innerWidth, window.innerHeight)
       circleSizeRef.current = size
       setCircleSize(size)
-    })
-    obs.observe(mainRef.current)
-    return () => obs.disconnect()
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
   }, [])
 
   useEffect(() => {
@@ -156,37 +154,41 @@ export default function MainDisplay() {
         </header>
       )}
 
-      {/* Main message area */}
-      <main ref={mainRef} className="relative z-10 flex-1 flex items-center justify-center">
+      {/* Circle — absolutely centered on the full viewport */}
+      <div
+        className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700"
+        style={{
+          width: circleSize || undefined,
+          height: circleSize || undefined,
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          border: circleSize ? '1px solid rgba(161,120,40,0.18)' : undefined,
+          boxShadow: displayText && circleSize
+            ? '0 0 80px rgba(161,120,40,0.10), 0 0 200px rgba(161,120,40,0.05), inset 0 0 80px rgba(161,120,40,0.05)'
+            : undefined,
+        }}
+      >
         <div
-          className="relative flex items-center justify-center rounded-full transition-shadow duration-700"
+          className="flex items-center justify-center"
           style={{
-            width: circleSize || undefined,
-            height: circleSize || undefined,
-            border: circleSize ? '1px solid rgba(161,120,40,0.18)' : undefined,
-            boxShadow: displayText && circleSize
-              ? '0 0 80px rgba(161,120,40,0.10), 0 0 200px rgba(161,120,40,0.05), inset 0 0 80px rgba(161,120,40,0.05)'
-              : undefined,
+            width: circleSize ? circleSize * 0.707 : undefined,
+            height: circleSize ? circleSize * 0.707 : undefined,
           }}
         >
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: circleSize ? circleSize * 0.7 : undefined,
-              height: circleSize ? circleSize * 0.7 : undefined,
-            }}
-          >
-            {displayText && (
-              <p
-                className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
-                style={{ fontSize }}
-              >
-                <TypewriterText text={displayText} charDelay={40} />
-              </p>
-            )}
-          </div>
+          {displayText && (
+            <p
+              className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
+              style={{ fontSize }}
+            >
+              <TypewriterText text={displayText} charDelay={40} />
+            </p>
+          )}
         </div>
-      </main>
+      </div>
+
+      {/* Spacer to keep flex layout intact */}
+      <main className="relative flex-1" />
     </div>
   )
 }
