@@ -100,10 +100,17 @@ export default function MainDisplay() {
   const [circleSize, setCircleSize] = useState(0)
   const [fontSize, setFontSize] = useState(48)
   const circleSizeRef = useRef(0)
+  const circleRef = useRef<HTMLDivElement>(null)
+  const lastTapTimeRef = useRef(0)
+  const pinchStartDistRef = useRef(0)
+  const pinchStartPercentRef = useRef(100)
+  const circleSizePercentRef = useRef(100)
   const [showButtonVisible, setShowButtonVisible] = useState(false)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hintVisible, setHintVisible] = useState(false)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [exitFsButtonVisible, setExitFsButtonVisible] = useState(false)
+  const exitFsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [speedIndex, setSpeedIndex] = useState(() => Number(localStorage.getItem('jumanji_speed') ?? 1))
   const [circleSizePercent, setCircleSizePercent] = useState(() => Number(localStorage.getItem('jumanji_circle_size') ?? 100))
@@ -111,6 +118,7 @@ export default function MainDisplay() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const currentPreset = SPEED_PRESETS[speedIndex]
   circleScaleRef.current = circleSizePercent / 100
+  circleSizePercentRef.current = circleSizePercent
   const effectiveCircleSize = circleSize * (circleSizePercent / 100)
 
   useEffect(() => {
@@ -193,8 +201,16 @@ export default function MainDisplay() {
       document.removeEventListener('fullscreenchange', onFsChange)
       if (showTimerRef.current) clearTimeout(showTimerRef.current)
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+      if (exitFsTimerRef.current) clearTimeout(exitFsTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      setExitFsButtonVisible(false)
+      if (exitFsTimerRef.current) clearTimeout(exitFsTimerRef.current)
+    }
+  }, [isFullscreen])
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -211,12 +227,60 @@ export default function MainDisplay() {
     hintTimerRef.current = setTimeout(() => setHintVisible(false), 3000)
   }
 
-  const handleCircleInteraction = () => {
+  const handleCircleClick = () => {
+    const now = Date.now()
+    const timeSince = now - lastTapTimeRef.current
+    if (timeSince < 300 && timeSince > 0 && !document.fullscreenElement) {
+      lastTapTimeRef.current = 0
+      toggleFullscreen()
+      return
+    }
+    lastTapTimeRef.current = now
+    if (document.fullscreenElement) {
+      if (exitFsTimerRef.current) clearTimeout(exitFsTimerRef.current)
+      setExitFsButtonVisible(true)
+      exitFsTimerRef.current = setTimeout(() => setExitFsButtonVisible(false), 3000)
+    }
     if (headerVisible) return
     if (showTimerRef.current) clearTimeout(showTimerRef.current)
     setShowButtonVisible(true)
     showTimerRef.current = setTimeout(() => setShowButtonVisible(false), 3000)
   }
+
+  useEffect(() => {
+    const el = circleRef.current
+    if (!el) return
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      pinchStartDistRef.current = Math.hypot(dx, dy)
+      pinchStartPercentRef.current = circleSizePercentRef.current
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || pinchStartDistRef.current === 0) return
+      e.preventDefault()
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      const dist = Math.hypot(dx, dy)
+      const newPct = Math.round(Math.min(150, Math.max(50, pinchStartPercentRef.current * (dist / pinchStartDistRef.current))))
+      setCircleSizePercent(newPct)
+    }
+    const onTouchEnd = () => {
+      if (pinchStartDistRef.current > 0) {
+        localStorage.setItem('jumanji_circle_size', String(circleSizePercentRef.current))
+        pinchStartDistRef.current = 0
+      }
+    }
+    el.addEventListener('touchstart', onTouchStart)
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd)
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
 
 
   if (loadingSession) {
@@ -237,27 +301,23 @@ export default function MainDisplay() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
       </div>
 
-      {/* Show button — large hit area centered on button position, appears on circle tap when header is hidden */}
+      {/* Show button — appears at top of text square on circle tap when header is hidden */}
       {!headerVisible && showButtonVisible && (
-        <div
-          className="absolute z-20 flex items-center justify-center cursor-pointer animate-fade-in"
+        <button
           onClick={(e) => {
             e.stopPropagation()
             if (showTimerRef.current) clearTimeout(showTimerRef.current)
             setHeaderVisible(true)
           }}
+          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
           style={{
             top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
             left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: effectiveCircleSize ? effectiveCircleSize * 0.354 : 150,
-            height: effectiveCircleSize ? effectiveCircleSize * 0.175 : 80,
+            transform: 'translateX(-50%)',
           }}
         >
-          <button className="text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 pointer-events-none">
-            ▼ show
-          </button>
-        </div>
+          ▼ show
+        </button>
       )}
 
       {/* Top bar — QR + code */}
@@ -359,8 +419,9 @@ export default function MainDisplay() {
 
       {/* Circle — absolutely centered on the full viewport */}
       <div
+        ref={circleRef}
         className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700 overflow-hidden"
-        onClick={handleCircleInteraction}
+        onClick={handleCircleClick}
         style={{
           cursor: !headerVisible ? 'pointer' : 'default',
           width: effectiveCircleSize || undefined,
@@ -395,7 +456,7 @@ export default function MainDisplay() {
         >
           {displayText && (
             <p
-              className="font-grobold text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
+              className="font-grobold text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full select-none"
               style={{ fontSize }}
             >
               <TypewriterText text={displayText} charDelay={currentPreset.charDelay} animDuration={currentPreset.animDuration} />
@@ -406,6 +467,26 @@ export default function MainDisplay() {
 
       {/* Spacer to keep flex layout intact */}
       <main className="relative flex-1 pointer-events-none" />
+
+      {/* Exit fullscreen button — bottom-right of text square, shown 3s on tap */}
+      {isFullscreen && exitFsButtonVisible && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (exitFsTimerRef.current) clearTimeout(exitFsTimerRef.current)
+            setExitFsButtonVisible(false)
+            document.exitFullscreen()
+          }}
+          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
+          style={{
+            top: effectiveCircleSize ? `calc(50% + ${(effectiveCircleSize * 0.707) / 2}px - 16px)` : 'auto',
+            left: effectiveCircleSize ? `calc(50% + ${(effectiveCircleSize * 0.707) / 2}px - 16px)` : 'auto',
+            transform: 'translate(-100%, -100%)',
+          }}
+        >
+          ⊡
+        </button>
+      )}
 
       {/* Hint — shown briefly after header is dismissed */}
       {hintVisible && (
