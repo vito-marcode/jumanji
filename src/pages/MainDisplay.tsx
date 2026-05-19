@@ -105,8 +105,12 @@ export default function MainDisplay() {
   const [hintVisible, setHintVisible] = useState(false)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [speedIndex, setSpeedIndex] = useState(() => Number(localStorage.getItem('jumanji_speed') ?? 1))
+  const [circleSizePercent, setCircleSizePercent] = useState(() => Number(localStorage.getItem('jumanji_circle_size') ?? 100))
+  const circleScaleRef = useRef(circleSizePercent / 100)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const currentPreset = SPEED_PRESETS[speedIndex]
+  circleScaleRef.current = circleSizePercent / 100
+  const effectiveCircleSize = circleSize * (circleSizePercent / 100)
 
   useEffect(() => {
     if (!sessionCode) return
@@ -159,18 +163,18 @@ export default function MainDisplay() {
     setDisplayText(null)
     const timer = setTimeout(() => {
       if (circleSizeRef.current > 0) {
-        setFontSize(calcFontSize(text, circleSizeRef.current * 0.707))
+        setFontSize(calcFontSize(text, circleSizeRef.current * circleScaleRef.current * 0.707))
       }
       setDisplayText(text)
     }, 400)
     return () => clearTimeout(timer)
   }, [latestMessage?.id])
 
-  // Recalculate font when circle resizes (window resize / header toggle)
+  // Recalculate font when circle resizes (window resize / scale change)
   useEffect(() => {
-    if (!displayText || circleSize === 0) return
-    setFontSize(calcFontSize(displayText, circleSize * 0.707))
-  }, [circleSize])
+    if (!displayText || effectiveCircleSize === 0) return
+    setFontSize(calcFontSize(displayText, effectiveCircleSize * 0.707))
+  }, [effectiveCircleSize])
 
   useEffect(() => {
     if (headerVisible) {
@@ -221,23 +225,27 @@ export default function MainDisplay() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
       </div>
 
-      {/* Show button — appears at top-center of circle on click/touch when header is hidden */}
+      {/* Show button — large hit area centered on button position, appears on circle tap when header is hidden */}
       {!headerVisible && showButtonVisible && (
-        <button
+        <div
+          className="absolute z-20 flex items-center justify-center cursor-pointer animate-fade-in"
           onClick={(e) => {
             e.stopPropagation()
             if (showTimerRef.current) clearTimeout(showTimerRef.current)
             setHeaderVisible(true)
           }}
-          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
           style={{
-            top: circleSize ? `calc(50% - ${circleSize / 2}px + 16px)` : 16,
+            top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: 'translate(-50%, -50%)',
+            width: effectiveCircleSize ? effectiveCircleSize * 0.354 : 150,
+            height: effectiveCircleSize ? effectiveCircleSize * 0.175 : 80,
           }}
         >
-          ▼ show
-        </button>
+          <button className="text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 pointer-events-none">
+            ▼ show
+          </button>
+        </div>
       )}
 
       {/* Top bar — QR + code */}
@@ -305,6 +313,27 @@ export default function MainDisplay() {
                   </span>
                 ))}
               </div>
+              <p className="text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2">
+                Circle Size — <span className="text-gold-400">{circleSizePercent}%</span>
+              </p>
+              <input
+                type="range"
+                min={50}
+                max={150}
+                step={1}
+                value={circleSizePercent}
+                onChange={e => {
+                  const val = Number(e.target.value)
+                  setCircleSizePercent(val)
+                  localStorage.setItem('jumanji_circle_size', String(val))
+                }}
+                className="w-full accent-gold-400 cursor-pointer"
+              />
+              <div className="flex justify-between w-full px-0.5">
+                <span className="text-[10px] font-cinzel uppercase text-jungle-600">50%</span>
+                <span className={`text-[10px] font-cinzel uppercase ${circleSizePercent === 100 ? 'text-gold-400' : 'text-jungle-600'}`}>100%</span>
+                <span className="text-[10px] font-cinzel uppercase text-jungle-600">150%</span>
+              </div>
             </div>
           )}
         </header>
@@ -316,13 +345,13 @@ export default function MainDisplay() {
         onClick={handleCircleInteraction}
         style={{
           cursor: !headerVisible ? 'pointer' : 'default',
-          width: circleSize || undefined,
-          height: circleSize || undefined,
+          width: effectiveCircleSize || undefined,
+          height: effectiveCircleSize || undefined,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          border: circleSize ? '1px solid rgba(161,120,40,0.18)' : undefined,
-          boxShadow: displayText && circleSize
+          border: effectiveCircleSize ? '1px solid rgba(161,120,40,0.18)' : undefined,
+          boxShadow: displayText && effectiveCircleSize
             ? '0 0 80px rgba(161,120,40,0.10), 0 0 200px rgba(161,120,40,0.05), inset 0 0 80px rgba(161,120,40,0.05)'
             : undefined,
         }}
@@ -342,8 +371,8 @@ export default function MainDisplay() {
         <div
           className="flex items-center justify-center"
           style={{
-            width: circleSize ? circleSize * 0.707 : undefined,
-            height: circleSize ? circleSize * 0.707 : undefined,
+            width: effectiveCircleSize ? effectiveCircleSize * 0.707 : undefined,
+            height: effectiveCircleSize ? effectiveCircleSize * 0.707 : undefined,
           }}
         >
           {displayText && (
@@ -364,7 +393,11 @@ export default function MainDisplay() {
       {hintVisible && (
         <p
           className="absolute z-10 text-jungle-600 text-xs font-cinzel uppercase tracking-widest animate-fade-in pointer-events-none text-center whitespace-nowrap"
-          style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+          style={{
+            top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
         >
           Tap the circle to show again
         </p>
