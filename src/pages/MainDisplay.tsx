@@ -247,38 +247,64 @@ export default function MainDisplay() {
     showTimerRef.current = setTimeout(() => setShowButtonVisible(false), 3000)
   }
 
+  // Touch pinch handlers (React synthetic — registered as soon as circle mounts)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return
+    const dx = e.touches[1].clientX - e.touches[0].clientX
+    const dy = e.touches[1].clientY - e.touches[0].clientY
+    pinchStartDistRef.current = Math.hypot(dx, dy)
+    pinchStartPercentRef.current = circleSizePercentRef.current
+  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return
+    const dx = e.touches[1].clientX - e.touches[0].clientX
+    const dy = e.touches[1].clientY - e.touches[0].clientY
+    const dist = Math.hypot(dx, dy)
+    if (pinchStartDistRef.current === 0) {
+      pinchStartDistRef.current = dist
+      pinchStartPercentRef.current = circleSizePercentRef.current
+      return
+    }
+    const newPct = Math.round(Math.min(150, Math.max(50, pinchStartPercentRef.current * (dist / pinchStartDistRef.current))))
+    setCircleSizePercent(newPct)
+  }
+  const handleTouchEnd = () => {
+    if (pinchStartDistRef.current > 0) {
+      localStorage.setItem('jumanji_circle_size', String(circleSizePercentRef.current))
+      pinchStartDistRef.current = 0
+    }
+  }
+
+  // Mac trackpad: wheel+ctrlKey (Chrome) and gesture events (Safari) — on window to avoid ref timing issues
   useEffect(() => {
-    const el = circleRef.current
-    if (!el) return
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 2) return
-      const dx = e.touches[1].clientX - e.touches[0].clientX
-      const dy = e.touches[1].clientY - e.touches[0].clientY
-      pinchStartDistRef.current = Math.hypot(dx, dy)
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      e.preventDefault()
+      const newPct = Math.round(Math.min(150, Math.max(50, circleSizePercentRef.current * Math.pow(0.99, e.deltaY))))
+      setCircleSizePercent(newPct)
+      localStorage.setItem('jumanji_circle_size', String(newPct))
+    }
+    const onGestureStart = (e: Event) => {
+      e.preventDefault()
       pinchStartPercentRef.current = circleSizePercentRef.current
     }
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length !== 2 || pinchStartDistRef.current === 0) return
+    const onGestureChange = (e: Event) => {
       e.preventDefault()
-      const dx = e.touches[1].clientX - e.touches[0].clientX
-      const dy = e.touches[1].clientY - e.touches[0].clientY
-      const dist = Math.hypot(dx, dy)
-      const newPct = Math.round(Math.min(150, Math.max(50, pinchStartPercentRef.current * (dist / pinchStartDistRef.current))))
+      const newPct = Math.round(Math.min(150, Math.max(50, pinchStartPercentRef.current * (e as any).scale)))
       setCircleSizePercent(newPct)
     }
-    const onTouchEnd = () => {
-      if (pinchStartDistRef.current > 0) {
-        localStorage.setItem('jumanji_circle_size', String(circleSizePercentRef.current))
-        pinchStartDistRef.current = 0
-      }
+    const onGestureEnd = () => {
+      localStorage.setItem('jumanji_circle_size', String(circleSizePercentRef.current))
     }
-    el.addEventListener('touchstart', onTouchStart)
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', onTouchEnd)
+    window.addEventListener('wheel', onWheel, { passive: false })
+    window.addEventListener('gesturestart', onGestureStart)
+    window.addEventListener('gesturechange', onGestureChange)
+    window.addEventListener('gestureend', onGestureEnd)
     return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('gesturestart', onGestureStart)
+      window.removeEventListener('gesturechange', onGestureChange)
+      window.removeEventListener('gestureend', onGestureEnd)
     }
   }, [])
 
@@ -422,8 +448,12 @@ export default function MainDisplay() {
         ref={circleRef}
         className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700 overflow-hidden"
         onClick={handleCircleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{
           cursor: !headerVisible ? 'pointer' : 'default',
+          touchAction: 'none',
           width: effectiveCircleSize || undefined,
           height: effectiveCircleSize || undefined,
           top: '50%',
