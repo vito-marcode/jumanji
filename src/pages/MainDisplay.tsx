@@ -104,6 +104,7 @@ export default function MainDisplay() {
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hintVisible, setHintVisible] = useState(false)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [speedIndex, setSpeedIndex] = useState(() => Number(localStorage.getItem('jumanji_speed') ?? 1))
   const [circleSizePercent, setCircleSizePercent] = useState(() => Number(localStorage.getItem('jumanji_circle_size') ?? 100))
   const circleScaleRef = useRef(circleSizePercent / 100)
@@ -186,11 +187,22 @@ export default function MainDisplay() {
   }, [headerVisible])
 
   useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onFsChange)
     return () => {
+      document.removeEventListener('fullscreenchange', onFsChange)
       if (showTimerRef.current) clearTimeout(showTimerRef.current)
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     }
   }, [])
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }
 
   const hideHeader = () => {
     setHeaderVisible(false)
@@ -270,6 +282,12 @@ export default function MainDisplay() {
                 className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 ? Help
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+              >
+                {isFullscreen ? '⊡ exit' : '⛶ full'}
               </button>
               <button
                 onClick={() => setSettingsOpen(v => !v)}
