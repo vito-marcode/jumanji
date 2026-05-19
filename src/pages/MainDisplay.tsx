@@ -312,7 +312,7 @@ export default function MainDisplay() {
 
       {/* Circle — absolutely centered on the full viewport */}
       <div
-        className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700"
+        className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700 overflow-hidden"
         onClick={handleCircleInteraction}
         style={{
           cursor: !headerVisible ? 'pointer' : 'default',
@@ -327,6 +327,18 @@ export default function MainDisplay() {
             : undefined,
         }}
       >
+        {/* Glass dome effect — barely perceptible curved surface */}
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{
+            background: [
+              'radial-gradient(ellipse 60% 22% at 50% 7%, rgba(255,255,255,0.045) 0%, transparent 100%)',
+              'radial-gradient(circle at 50% 50%, transparent 48%, rgba(0,0,0,0.22) 100%)',
+              'radial-gradient(ellipse 65% 30% at 50% 92%, rgba(0,0,0,0.10) 0%, transparent 100%)',
+            ].join(', '),
+          }}
+        />
+
         <div
           className="flex items-center justify-center"
           style={{
