@@ -7,6 +7,8 @@ export default {
       fontFamily: {
         cinzel: ['"Cinzel"', 'serif'],
         cinzel_deco: ['"Cinzel Decorative"', 'serif'],
+        forum: ['"Forum"', 'serif'],
+        grobold: ['"Grobold"', 'sans-serif'],
         mono: ['"Courier New"', 'Courier', 'monospace'],
       },
       colors: {

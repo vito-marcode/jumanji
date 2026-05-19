@@ -50,7 +50,7 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
   const wrapEl = document.createElement('div')
   wrapEl.style.cssText = [
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
-    `width:${boxWidth}px`, 'font-family:"Cinzel",serif',
+    `width:${boxWidth}px`, 'font-family:"Grobold",sans-serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
     'line-height:1.625', 'word-break:break-word',
     'white-space:normal', 'text-align:center',
@@ -64,7 +64,7 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
   const measureEl = document.createElement('span')
   measureEl.style.cssText = [
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
-    'white-space:nowrap', 'font-family:"Cinzel",serif',
+    'white-space:nowrap', 'font-family:"Grobold",sans-serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
   ].join(';')
   measureEl.textContent = longestWord
@@ -102,6 +102,8 @@ export default function MainDisplay() {
   const circleSizeRef = useRef(0)
   const [showButtonVisible, setShowButtonVisible] = useState(false)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [hintVisible, setHintVisible] = useState(false)
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [speedIndex, setSpeedIndex] = useState(() => Number(localStorage.getItem('jumanji_speed') ?? 1))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const currentPreset = SPEED_PRESETS[speedIndex]
@@ -173,13 +175,25 @@ export default function MainDisplay() {
   useEffect(() => {
     if (headerVisible) {
       setShowButtonVisible(false)
+      setHintVisible(false)
       if (showTimerRef.current) clearTimeout(showTimerRef.current)
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     }
   }, [headerVisible])
 
   useEffect(() => {
-    return () => { if (showTimerRef.current) clearTimeout(showTimerRef.current) }
+    return () => {
+      if (showTimerRef.current) clearTimeout(showTimerRef.current)
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    }
   }, [])
+
+  const hideHeader = () => {
+    setHeaderVisible(false)
+    setHintVisible(true)
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    hintTimerRef.current = setTimeout(() => setHintVisible(false), 3000)
+  }
 
   const handleCircleInteraction = () => {
     if (headerVisible) return
@@ -198,7 +212,10 @@ export default function MainDisplay() {
   }
 
   return (
-    <div className="min-h-screen bg-jungle-950 flex flex-col relative overflow-hidden">
+    <div
+      className="min-h-screen bg-jungle-950 flex flex-col relative overflow-hidden"
+      onClick={() => { if (headerVisible) hideHeader() }}
+    >
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
@@ -225,7 +242,7 @@ export default function MainDisplay() {
 
       {/* Top bar — QR + code */}
       {headerVisible && (
-        <header className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 p-6 rounded-xl border border-jungle-700 bg-jungle-950/90 backdrop-blur-sm shadow-2xl w-[90vw] max-w-xl animate-fade-in">
+        <header className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 p-6 rounded-xl border border-jungle-700 bg-jungle-950/90 backdrop-blur-sm shadow-2xl w-[90vw] max-w-xl animate-fade-in" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col gap-1 items-center text-center">
             <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
             <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
@@ -253,7 +270,7 @@ export default function MainDisplay() {
                 ⚙ speed
               </button>
               <button
-                onClick={() => setHeaderVisible(false)}
+                onClick={hideHeader}
                 className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 ▲ hide
@@ -319,7 +336,7 @@ export default function MainDisplay() {
         >
           {displayText && (
             <p
-              className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
+              className="font-grobold text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
               style={{ fontSize }}
             >
               <TypewriterText text={displayText} charDelay={currentPreset.charDelay} animDuration={currentPreset.animDuration} />
@@ -330,6 +347,16 @@ export default function MainDisplay() {
 
       {/* Spacer to keep flex layout intact */}
       <main className="relative flex-1 pointer-events-none" />
+
+      {/* Hint — shown briefly after header is dismissed */}
+      {hintVisible && (
+        <p
+          className="absolute z-10 text-jungle-600 text-xs font-cinzel uppercase tracking-widest animate-fade-in pointer-events-none text-center whitespace-nowrap"
+          style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+        >
+          Tap the circle to show again
+        </p>
+      )}
 
       {tutorial.isVisible && (
         <TutorialOverlay
