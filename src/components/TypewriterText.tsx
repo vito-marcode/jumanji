@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 interface TypewriterTextProps {
   text: string
   charDelay?: number
+  animDuration?: number
   onComplete?: () => void
 }
 
-export function TypewriterText({ text, charDelay = 120, onComplete }: TypewriterTextProps) {
+export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onComplete }: TypewriterTextProps) {
   const [revealedCount, setRevealedCount] = useState(0)
   const onCompleteRef = useRef(onComplete)
 
@@ -61,6 +62,7 @@ export function TypewriterText({ text, charDelay = 120, onComplete }: Typewriter
                   style={{
                     transform: 'translateZ(0)',
                     willChange: 'filter, opacity',
+                    ...(absIdx < revealedCount && { animationDuration: `${animDuration}ms` }),
                     ...(isLastInWord && { letterSpacing: 0 }),
                   }}
                   onAnimationEnd={isVeryLast ? () => onCompleteRef.current?.() : undefined}

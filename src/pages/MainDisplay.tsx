@@ -10,6 +10,14 @@ import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
 import type { Session } from '../types'
 
+const SPEED_PRESETS = [
+  { label: 'Mystic',  charDelay: 220, animDuration: 10000 },
+  { label: 'Ancient', charDelay: 120, animDuration: 6000  },
+  { label: 'Swift',   charDelay: 70,  animDuration: 3500  },
+  { label: 'Wild',    charDelay: 40,  animDuration: 2000  },
+  { label: 'Frenzy',  charDelay: 20,  animDuration: 1000  },
+]
+
 const MAIN_STEPS: TutorialStep[] = [
   {
     icon: '🖥️',
@@ -25,6 +33,11 @@ const MAIN_STEPS: TutorialStep[] = [
     icon: '📱',
     title: 'QR Code',
     description: 'The QR code (top-right) lets anyone scan and join instantly on their phone. No typing needed.',
+  },
+  {
+    icon: '👆',
+    title: 'Hide & Reveal',
+    description: 'Use "▲ hide" to dismiss this panel and go full-screen. Tap or click anywhere inside the circle to reveal the "▼ show" button and bring it back.',
   },
 ]
 
@@ -45,26 +58,25 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
   wrapEl.textContent = text
   document.body.appendChild(wrapEl)
 
-  // No-wrap element to measure true rendered width (avoids letter-spacing scrollWidth artifacts)
+  // No-wrap element measuring the longest individual word — TypewriterText renders each word
+  // with whitespace-nowrap so individual words can never break; the longest word must fit the width.
+  const longestWord = text.split(' ').reduce((a, b) => a.length > b.length ? a : b)
   const measureEl = document.createElement('span')
   measureEl.style.cssText = [
     'position:absolute', 'visibility:hidden', 'pointer-events:none',
     'white-space:nowrap', 'font-family:"Cinzel",serif',
     'text-transform:uppercase', 'letter-spacing:0.1em',
   ].join(';')
-  measureEl.textContent = text
+  measureEl.textContent = longestWord
   document.body.appendChild(measureEl)
 
-  const isMultiWord = text.includes(' ')
   let lo = 8, hi = 600, best = 16
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
     wrapEl.style.fontSize = `${mid}px`
     measureEl.style.fontSize = `${mid}px`
     const fitsHeight = wrapEl.scrollHeight <= boxHeight
-    // For single words (can't wrap): also check natural rendered width.
-    // For multi-word text: wrapping handles width; only height matters.
-    const fitsWidth = isMultiWord || measureEl.getBoundingClientRect().width <= boxWidth
+    const fitsWidth = measureEl.getBoundingClientRect().width <= boxWidth
     if (fitsHeight && fitsWidth) { best = mid; lo = mid + 1 }
     else hi = mid - 1
   }
@@ -88,6 +100,11 @@ export default function MainDisplay() {
   const [circleSize, setCircleSize] = useState(0)
   const [fontSize, setFontSize] = useState(48)
   const circleSizeRef = useRef(0)
+  const [showButtonVisible, setShowButtonVisible] = useState(false)
+  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [speedIndex, setSpeedIndex] = useState(() => Number(localStorage.getItem('jumanji_speed') ?? 1))
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const currentPreset = SPEED_PRESETS[speedIndex]
 
   useEffect(() => {
     if (!sessionCode) return
@@ -153,6 +170,24 @@ export default function MainDisplay() {
     setFontSize(calcFontSize(displayText, circleSize * 0.707))
   }, [circleSize])
 
+  useEffect(() => {
+    if (headerVisible) {
+      setShowButtonVisible(false)
+      if (showTimerRef.current) clearTimeout(showTimerRef.current)
+    }
+  }, [headerVisible])
+
+  useEffect(() => {
+    return () => { if (showTimerRef.current) clearTimeout(showTimerRef.current) }
+  }, [])
+
+  const handleCircleInteraction = () => {
+    if (headerVisible) return
+    if (showTimerRef.current) clearTimeout(showTimerRef.current)
+    setShowButtonVisible(true)
+    showTimerRef.current = setTimeout(() => setShowButtonVisible(false), 3000)
+  }
+
 
   if (loadingSession) {
     return (
@@ -169,11 +204,20 @@ export default function MainDisplay() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
       </div>
 
-      {/* Show button — only when header is hidden */}
-      {!headerVisible && (
+      {/* Show button — appears at top-center of circle on click/touch when header is hidden */}
+      {!headerVisible && showButtonVisible && (
         <button
-          onClick={() => setHeaderVisible(true)}
-          className="absolute top-3 right-3 z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (showTimerRef.current) clearTimeout(showTimerRef.current)
+            setHeaderVisible(true)
+          }}
+          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
+          style={{
+            top: circleSize ? `calc(50% - ${circleSize / 2}px + 16px)` : 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
         >
           ▼ show
         </button>
@@ -181,26 +225,32 @@ export default function MainDisplay() {
 
       {/* Top bar — QR + code */}
       {headerVisible && (
-        <header className="relative z-10 flex items-start justify-between gap-6 p-6 border-b border-jungle-800 animate-fade-in">
-          <div className="flex flex-col gap-1">
+        <header className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 p-6 rounded-xl border border-jungle-700 bg-jungle-950/90 backdrop-blur-sm shadow-2xl w-[90vw] max-w-xl animate-fade-in">
+          <div className="flex flex-col gap-1 items-center text-center">
             <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
             <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
             <button
               onClick={() => navigate('/')}
-              className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2 text-left transition-colors"
+              className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2 transition-colors"
             >
               ← Home
             </button>
           </div>
-          <div className="flex items-center gap-6 flex-wrap justify-end">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
             <SessionCodeBadge code={sessionCode ?? ''} />
             <QRCodeDisplay sessionCode={sessionCode ?? ''} />
-            <div className="flex items-center gap-2 self-start mt-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={tutorial.restart}
                 className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 ? Help
+              </button>
+              <button
+                onClick={() => setSettingsOpen(v => !v)}
+                className={`text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border hover:border-jungle-500 ${settingsOpen ? 'text-gold-400 border-gold-600' : 'text-jungle-400 hover:text-jungle-200 border-jungle-700'}`}
+              >
+                ⚙ speed
               </button>
               <button
                 onClick={() => setHeaderVisible(false)}
@@ -210,13 +260,45 @@ export default function MainDisplay() {
               </button>
             </div>
           </div>
+          {settingsOpen && (
+            <div className="w-full flex flex-col items-center gap-2 pt-3 border-t border-jungle-800">
+              <p className="text-jungle-400 text-xs font-cinzel uppercase tracking-widest">
+                Animation Speed — <span className="text-gold-400">{currentPreset.label}</span>
+              </p>
+              <input
+                type="range"
+                min={0}
+                max={4}
+                step={1}
+                value={speedIndex}
+                onChange={e => {
+                  const idx = Number(e.target.value)
+                  setSpeedIndex(idx)
+                  localStorage.setItem('jumanji_speed', String(idx))
+                }}
+                className="w-full accent-gold-400 cursor-pointer"
+              />
+              <div className="flex justify-between w-full px-0.5">
+                {SPEED_PRESETS.map((p, i) => (
+                  <span
+                    key={i}
+                    className={`text-[10px] font-cinzel uppercase transition-colors ${i === speedIndex ? 'text-gold-400' : 'text-jungle-600'}`}
+                  >
+                    {p.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </header>
       )}
 
       {/* Circle — absolutely centered on the full viewport */}
       <div
         className="absolute z-0 flex items-center justify-center rounded-full transition-shadow duration-700"
+        onClick={handleCircleInteraction}
         style={{
+          cursor: !headerVisible ? 'pointer' : 'default',
           width: circleSize || undefined,
           height: circleSize || undefined,
           top: '50%',
@@ -240,14 +322,14 @@ export default function MainDisplay() {
               className="font-cinzel text-gold-300 uppercase tracking-widest text-center leading-relaxed w-full"
               style={{ fontSize }}
             >
-              <TypewriterText text={displayText} charDelay={120} />
+              <TypewriterText text={displayText} charDelay={currentPreset.charDelay} animDuration={currentPreset.animDuration} />
             </p>
           )}
         </div>
       </div>
 
       {/* Spacer to keep flex layout intact */}
-      <main className="relative flex-1" />
+      <main className="relative flex-1 pointer-events-none" />
 
       {tutorial.isVisible && (
         <TutorialOverlay
