@@ -104,20 +104,20 @@ export default function ClientDevice() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-jungle-800 bg-jungle-900/60">
         <div>
           <h1 className="font-cinzel text-gold-300 font-bold text-base">JUMANJI</h1>
-          <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-wider">
+          <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-wider">
             Session: {sessionCode}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={tutorial.restart}
-            className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest transition-colors"
+            className="text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
           >
             ? Help
           </button>
           <button
             onClick={() => navigate('/')}
-            className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel transition-colors"
+            className="text-jungle-200 hover:text-jungle-50 text-sm font-cinzel px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
           >
             Leave
           </button>
@@ -131,30 +131,42 @@ export default function ClientDevice() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {/* Selection panel — shown when a collection is selected */}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+        {/* Active collection panel */}
         {selectedCollection && (
-          <div className="animate-slide-up">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-gold-400 font-cinzel text-sm font-semibold">{selectedCollection.name}</span>
-              <button
-                onClick={() => setSelectedCollection(null)}
-                className="text-jungle-500 hover:text-jungle-300 text-xs transition-colors"
-              >
-                (change)
-              </button>
+          <div className="animate-slide-up flex flex-col gap-3">
+            <div>
+              <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">Active Collection</p>
+              <div className="flex items-center gap-2">
+                <span className="text-gold-300 font-cinzel text-base font-semibold">{selectedCollection.name}</span>
+                <button
+                  onClick={() => setSelectedCollection(null)}
+                  className="text-jungle-200 hover:text-jungle-50 text-sm px-2 py-1 rounded hover:bg-jungle-800 transition-colors"
+                >
+                  (change)
+                </button>
+              </div>
             </div>
             <SelectionModePanel collection={selectedCollection} onSend={handleSend} />
           </div>
         )}
 
         {/* Collections list */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-cinzel text-jungle-300 text-sm uppercase tracking-widest">Collections</h2>
-            <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
-              + New
-            </Button>
+        <div className={`flex flex-col gap-3 ${selectedCollection ? 'pt-8 border-t border-jungle-800' : ''}`}>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-cinzel text-jungle-100 text-sm uppercase tracking-widest">
+                Your Collections
+              </h2>
+              <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
+                + New
+              </Button>
+            </div>
+            <p className="text-jungle-200 text-sm">
+              {selectedCollection
+                ? 'Tap another collection to switch the active one.'
+                : 'Tap a collection to activate it, then pick an option to send.'}
+            </p>
           </div>
 
           {collectionsLoading && (
@@ -164,7 +176,7 @@ export default function ClientDevice() {
           )}
 
           {!collectionsLoading && collections.length === 0 && (
-            <p className="text-jungle-600 text-sm text-center py-6 font-cinzel">
+            <p className="text-jungle-200 text-sm text-center py-6 font-cinzel">
               No collections yet. Create one to begin.
             </p>
           )}

@@ -340,7 +340,7 @@ export default function MainDisplay() {
             if (showTimerRef.current) clearTimeout(showTimerRef.current)
             setHeaderVisible(true)
           }}
-          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
+          className="absolute z-20 text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
           style={{
             top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
             left: '50%',
@@ -356,10 +356,10 @@ export default function MainDisplay() {
         <header className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 p-6 rounded-xl border border-jungle-700 bg-jungle-950/90 backdrop-blur-sm shadow-2xl w-[90vw] max-w-xl animate-fade-in" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col gap-1 items-center text-center">
             <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
-            <p className="text-jungle-500 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
+            <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
             <button
               onClick={() => navigate('/')}
-              className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2 transition-colors"
+              className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest mt-2 transition-colors"
             >
               ← Home
             </button>
@@ -370,25 +370,25 @@ export default function MainDisplay() {
             <div className="flex items-center gap-2">
               <button
                 onClick={tutorial.restart}
-                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 ? Help
               </button>
               <button
                 onClick={toggleFullscreen}
-                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 {isFullscreen ? '⊡ exit' : '⛶ full'}
               </button>
               <button
                 onClick={() => setSettingsOpen(v => !v)}
-                className={`text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border hover:border-jungle-500 ${settingsOpen ? 'text-gold-400 border-gold-600' : 'text-jungle-400 hover:text-jungle-200 border-jungle-700'}`}
+                className={`text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border hover:border-jungle-500 ${settingsOpen ? 'text-gold-400 border-gold-600' : 'text-jungle-200 hover:text-jungle-50 border-jungle-700'}`}
               >
                 ⚙ speed
               </button>
               <button
                 onClick={hideHeader}
-                className="text-jungle-400 hover:text-jungle-200 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
+                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
               >
                 ▲ hide
               </button>
@@ -396,7 +396,7 @@ export default function MainDisplay() {
           </div>
           {settingsOpen && (
             <div className="w-full flex flex-col items-center gap-2 pt-3 border-t border-jungle-800">
-              <p className="text-jungle-400 text-xs font-cinzel uppercase tracking-widest">
+              <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest">
                 Animation Speed — <span className="text-gold-400">{currentPreset.label}</span>
               </p>
               <input
@@ -416,13 +416,13 @@ export default function MainDisplay() {
                 {SPEED_PRESETS.map((p, i) => (
                   <span
                     key={i}
-                    className={`text-[10px] font-cinzel uppercase transition-colors ${i === speedIndex ? 'text-gold-400' : 'text-jungle-600'}`}
+                    className={`text-[10px] font-cinzel uppercase transition-colors ${i === speedIndex ? 'text-gold-400' : 'text-jungle-200'}`}
                   >
                     {p.label}
                   </span>
                 ))}
               </div>
-              <p className="text-jungle-400 text-xs font-cinzel uppercase tracking-widest mt-2">
+              <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest mt-2">
                 Circle Size — <span className="text-gold-400">{circleSizePercent}%</span>
               </p>
               <input
@@ -439,9 +439,9 @@ export default function MainDisplay() {
                 className="w-full accent-gold-400 cursor-pointer"
               />
               <div className="flex justify-between w-full px-0.5">
-                <span className="text-[10px] font-cinzel uppercase text-jungle-600">50%</span>
-                <span className={`text-[10px] font-cinzel uppercase ${circleSizePercent === 100 ? 'text-gold-400' : 'text-jungle-600'}`}>100%</span>
-                <span className="text-[10px] font-cinzel uppercase text-jungle-600">150%</span>
+                <span className="text-[10px] font-cinzel uppercase text-jungle-200">50%</span>
+                <span className={`text-[10px] font-cinzel uppercase ${circleSizePercent === 100 ? 'text-gold-400' : 'text-jungle-200'}`}>100%</span>
+                <span className="text-[10px] font-cinzel uppercase text-jungle-200">150%</span>
               </div>
             </div>
           )}
@@ -512,7 +512,7 @@ export default function MainDisplay() {
             setExitFsButtonVisible(false)
             document.exitFullscreen()
           }}
-          className="absolute z-20 text-jungle-600 hover:text-jungle-300 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
+          className="absolute z-20 text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
           style={{
             top: effectiveCircleSize ? `calc(50% + ${(effectiveCircleSize * 0.707) / 2}px - 16px)` : 'auto',
             left: effectiveCircleSize ? `calc(50% + ${(effectiveCircleSize * 0.707) / 2}px - 16px)` : 'auto',
@@ -531,7 +531,7 @@ export default function MainDisplay() {
       {/* Hint — shown briefly after header is dismissed */}
       {hintVisible && (
         <p
-          className="absolute z-10 text-jungle-600 text-xs font-cinzel uppercase tracking-widest animate-fade-in pointer-events-none text-center whitespace-nowrap"
+          className="absolute z-10 text-jungle-200 text-xs font-cinzel uppercase tracking-widest animate-fade-in pointer-events-none text-center whitespace-nowrap"
           style={{
             top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
             left: '50%',

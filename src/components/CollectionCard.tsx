@@ -76,38 +76,28 @@ export function CollectionCard({
         <div className="flex items-center justify-between gap-2">
           <button
             className="flex-1 text-left flex items-center gap-2"
-            onClick={() => { onSelect(); setExpanded(true) }}
+            onClick={() => { setExpanded((v) => !v); onSelect() }}
           >
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded border border-jungle-600 bg-jungle-800 text-jungle-300 text-xs leading-none shrink-0">▶</span>
+            <span className="text-jungle-200 text-sm shrink-0 w-4 text-center">{expanded ? '▲' : '▼'}</span>
             <span className="font-cinzel text-jungle-100 font-semibold">{collection.name}</span>
-            <span className="text-xs text-jungle-500">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-jungle-200">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
           </button>
 
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded((v) => !v)}
-              title={expanded ? 'Collapse' : 'Expand'}
-            >
-              {expanded ? '▲' : '▼'}
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => setConfirmDeleteCollection(true)}
-              title="Delete collection"
-            >
-              ✕
-            </Button>
-          </div>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setConfirmDeleteCollection(true)}
+            title="Delete collection"
+          >
+            ✕
+          </Button>
         </div>
 
         {expanded && (
           <div className="mt-3 flex flex-col gap-2">
             {(collection.options ?? []).map((opt) => (
               <div key={opt.id} className="flex items-start gap-2 group">
-                <span className="text-xs text-jungle-500 w-5 shrink-0 pt-0.5">{opt.position + 1}.</span>
+                <span className="text-xs text-jungle-200 w-5 shrink-0 pt-0.5">{opt.position + 1}.</span>
                 {editingOptionId === opt.id ? (
                   <div className="flex-1 flex flex-col gap-2">
                     <textarea
@@ -133,14 +123,14 @@ export function CollectionCard({
                     <span className="flex-1 text-sm text-jungle-200 break-words">{opt.text}</span>
                     <button
                       onClick={() => startEdit(opt.id, opt.text)}
-                      className="opacity-0 group-hover:opacity-100 text-jungle-500 hover:text-jungle-300 text-xs shrink-0 transition-opacity"
+                      className="text-jungle-200 hover:text-jungle-50 text-sm shrink-0 px-2 py-1 rounded hover:bg-jungle-700 transition-colors"
                       title="Edit option"
                     >
                       ✎
                     </button>
                     <button
                       onClick={() => setPendingDeleteOptionId(opt.id)}
-                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 text-xs shrink-0 transition-opacity"
+                      className="text-red-400 hover:text-red-300 text-sm shrink-0 px-2 py-1 rounded hover:bg-red-900/30 transition-colors"
                       title="Delete option"
                     >
                       ✕

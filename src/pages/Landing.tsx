@@ -88,7 +88,7 @@ export default function Landing() {
           <h1 className="font-cinzel_deco text-5xl font-black text-gold-300 text-glow-gold leading-tight tracking-wider">
             JUMANJI
           </h1>
-          <p className="font-cinzel text-jungle-400 text-sm mt-2 tracking-widest uppercase">
+          <p className="font-cinzel text-jungle-200 text-sm mt-2 tracking-widest uppercase">
             The Game Awaits
           </p>
         </div>
@@ -130,7 +130,7 @@ export default function Landing() {
             {/* Recent sessions */}
             {recentSessions.length > 0 && (
               <div className="flex flex-col gap-2 mt-2">
-                <p className="text-jungle-600 text-xs font-cinzel uppercase tracking-widest text-center">
+                <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest text-center">
                   Recent Sessions
                 </p>
                 {recentSessions.map(s => (
@@ -143,11 +143,11 @@ export default function Landing() {
                       onClick={() => navigate(`/main/${s.code}`)}
                     >
                       <span className="font-cinzel text-gold-400 tracking-widest text-sm">{s.code}</span>
-                      <span className="text-jungle-600 text-xs font-cinzel">{timeAgo(s.createdAt)}</span>
+                      <span className="text-jungle-200 text-xs font-cinzel">{timeAgo(s.createdAt)}</span>
                     </button>
                     <button
                       onClick={() => setPendingRemoveCode(s.code)}
-                      className="text-jungle-700 hover:text-jungle-500 text-xs ml-2 transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-jungle-200 hover:text-jungle-50 text-xs ml-2 transition-colors opacity-0 group-hover:opacity-100"
                       aria-label="Remove"
                     >
                       ✕
@@ -193,13 +193,13 @@ export default function Landing() {
           </div>
         )}
 
-        <p className="text-jungle-600 text-xs text-center font-cinzel">
+        <p className="text-jungle-200 text-xs text-center font-cinzel">
           A world you can only survive together
         </p>
 
         <button
           onClick={tutorial.restart}
-          className="text-jungle-600 hover:text-jungle-400 text-xs font-cinzel uppercase tracking-widest transition-colors"
+          className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors"
         >
           ? Help
         </button>

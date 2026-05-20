@@ -107,10 +107,10 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
           <button
             key={tab.id}
             onClick={() => switchMode(tab.id)}
-            className={`flex-1 py-2 px-2 text-xs font-cinzel rounded transition-colors ${
+            className={`flex-1 py-3 px-3 text-sm font-cinzel rounded transition-colors ${
               mode === tab.id
                 ? 'bg-jungle-600 text-jungle-50 border border-jungle-400'
-                : 'bg-jungle-900 text-jungle-400 border border-jungle-700 hover:border-jungle-500'
+                : 'bg-jungle-900 text-jungle-200 border border-jungle-600 hover:border-jungle-400'
             }`}
           >
             {tab.label}
@@ -118,20 +118,26 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
         ))}
       </div>
 
+      <p className="text-jungle-200 text-sm">
+        {mode === 'manual'
+          ? 'Tap an option to send it instantly to the main screen.'
+          : 'Select options below, then roll the dice — a random pick will appear on the main screen.'}
+      </p>
+
       {/* ── Manual ── */}
       {mode === 'manual' && (
         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
           {options.length === 0 && (
-            <p className="text-jungle-500 text-sm text-center py-4">No options yet. Add some above.</p>
+            <p className="text-jungle-200 text-sm text-center py-4">No options yet. Add some above.</p>
           )}
           {options.map((opt) => (
             <button
               key={opt.id}
               onClick={() => handleManualSend(opt.text)}
               disabled={sending}
-              className="text-left px-3 py-2.5 rounded border border-jungle-700 hover:border-gold-500 bg-jungle-800 hover:bg-jungle-700 text-jungle-100 text-sm transition-all active:scale-95 disabled:opacity-50"
+              className="text-left px-3 py-3 rounded border border-jungle-700 hover:border-gold-500 bg-jungle-800 hover:bg-jungle-700 text-jungle-100 text-sm transition-all active:scale-95 disabled:opacity-50"
             >
-              <span className="text-jungle-500 text-xs mr-2">{opt.position + 1}.</span>
+              <span className="text-jungle-200 text-xs mr-2">{opt.position + 1}.</span>
               {opt.text}
             </button>
           ))}
@@ -142,12 +148,12 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
       {mode === 'random' && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-cinzel text-jungle-400 uppercase tracking-wider">
+            <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-wider">
               {selectedIds.size}/{options.length} selected
             </span>
             <button
               onClick={toggleAll}
-              className="text-xs font-cinzel text-jungle-400 hover:text-jungle-200 transition-colors uppercase tracking-wider"
+              className="text-xs font-cinzel text-jungle-200 hover:text-jungle-50 transition-colors uppercase tracking-wider px-2 py-1 rounded hover:bg-jungle-800"
             >
               {selectedIds.size === options.length ? 'Deselect all' : 'Select all'}
             </button>
@@ -155,7 +161,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
 
           <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
             {options.length === 0 && (
-              <p className="text-jungle-500 text-sm text-center py-4">No options yet.</p>
+              <p className="text-jungle-200 text-sm text-center py-4">No options yet.</p>
             )}
             {options.map((opt) => {
               const checked = selectedIds.has(opt.id)
@@ -163,18 +169,18 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
                 <button
                   key={opt.id}
                   onClick={() => toggleOption(opt.id)}
-                  className={`flex items-center gap-3 text-left px-3 py-2 rounded border transition-colors ${
+                  className={`flex items-center gap-3 text-left px-3 py-3 rounded border transition-colors ${
                     checked
                       ? 'border-jungle-500 bg-jungle-800 text-jungle-100'
-                      : 'border-jungle-800 bg-jungle-900/40 text-jungle-500'
+                      : 'border-jungle-700 bg-jungle-900/40 text-jungle-200'
                   }`}
                 >
-                  <span className={`w-4 h-4 flex-shrink-0 rounded-sm border text-xs flex items-center justify-center ${
-                    checked ? 'border-jungle-400 bg-jungle-600 text-jungle-100' : 'border-jungle-700'
+                  <span className={`w-5 h-5 flex-shrink-0 rounded-sm border text-sm flex items-center justify-center ${
+                    checked ? 'border-jungle-400 bg-jungle-600 text-jungle-100' : 'border-jungle-600'
                   }`}>
                     {checked && '✓'}
                   </span>
-                  <span className="text-jungle-500 text-xs mr-1">{opt.position + 1}.</span>
+                  <span className="text-jungle-200 text-xs mr-1">{opt.position + 1}.</span>
                   <span className="text-sm">{opt.text}</span>
                 </button>
               )
@@ -223,7 +229,7 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
 
         {/* Suspense label — fades out when revealing */}
         <p
-          className="text-xs font-cinzel text-jungle-500 mt-2 uppercase tracking-widest transition-opacity duration-500"
+          className="text-xs font-cinzel text-jungle-200 mt-2 uppercase tracking-widest transition-opacity duration-500"
           style={{ opacity: phase === 'suspense' ? 1 : 0 }}
         >
           appearing on main screen…
@@ -231,7 +237,7 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
       </div>
 
       {phase === 'revealed' && (
-        <p className="text-xs text-jungle-600 text-center font-cinzel animate-fade-in">
+        <p className="text-xs text-jungle-200 text-center font-cinzel animate-fade-in">
           ✓ sent to main screen
         </p>
       )}
