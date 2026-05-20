@@ -84,7 +84,17 @@ src/
 
 - Functional components only; all data/state logic lives in custom hooks
 - Tailwind utility classes for all styling — no CSS modules or inline styles
-- Fonts: **Cinzel** and **Cinzel Decorative** throughout (loaded via Google Fonts)
+- Fonts: **Cinzel**, **Cinzel Decorative** (Google Fonts) + **Grobold** (self-hosted via `public/GROBOLD.ttf`, `@font-face` in `globals.css`)
 - Custom Tailwind colors: `jungle-{50..950}`, `gold-{100..950}`
-- Custom Tailwind animations: `pulse-glow`, `fade-in`, `slide-up`, `typewriter`
+- Custom Tailwind animations: `pulse-glow`, `fade-in`, `slide-up`, `typewriter`, `materialize`
 - No authentication — anonymous Supabase access
+
+## MainDisplay UX Features
+
+- **Floating header** — centered card overlay; click/touch outside to dismiss
+- **Hide & reveal** — header hides on outside tap; tap inside the circle to show the "▼ show" button (3s auto-hide); a hint appears briefly inside the circle after dismissal
+- **Animation speed** — 5 presets (Mystic → Frenzy) controlling both `charDelay` and `animDuration` on `TypewriterText`; persisted to `localStorage`
+- **Circle size** — slider 50–150%, persisted to `localStorage`; also adjustable via pinch gesture (touch) or trackpad pinch (Mac: wheel+ctrlKey for Chrome, gesturechange for Safari)
+- **Fullscreen** — `⛶ full` button in header; double-tap circle to enter; single tap in fullscreen shows SVG exit button at bottom-right of text area for 3s
+- **Glass dome effect** — subtle layered radial gradients inside the circle simulating dark curved glass
+- **Font sizing** — `calcFontSize()` binary-searches the largest font that fits the inscribed square; measures the longest individual word to prevent overflow (words render `whitespace-nowrap` in `TypewriterText`)

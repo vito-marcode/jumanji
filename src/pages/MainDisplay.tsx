@@ -22,22 +22,27 @@ const MAIN_STEPS: TutorialStep[] = [
   {
     icon: '🖥️',
     title: 'The Main Display',
-    description: 'This is your jungle screen. Text sent from client devices appears here with a dramatic typewriter effect.',
+    description: 'This is your jungle screen. Text sent from client devices appears here with a dramatic typewriter effect using the Grobold font.',
   },
   {
     icon: '📋',
     title: 'Share the Code',
-    description: 'The session code (top-left) lets others join as clients. Click it to copy, then share!',
+    description: 'The session code lets others join as clients. Click it to copy, then share it or show the QR code for instant scanning.',
   },
   {
-    icon: '📱',
-    title: 'QR Code',
-    description: 'The QR code (top-right) lets anyone scan and join instantly on their phone. No typing needed.',
+    icon: '⚙️',
+    title: 'Settings',
+    description: 'Use "⚙ speed" to adjust the animation speed (5 presets from Mystic to Frenzy) and resize the circle (50–150%). Both settings are saved automatically.',
   },
   {
     icon: '👆',
     title: 'Hide & Reveal',
-    description: 'Use "▲ hide" to dismiss this panel and go full-screen. Tap or click anywhere inside the circle to reveal the "▼ show" button and bring it back.',
+    description: 'Tap or click outside this panel to hide it. Then tap inside the circle to reveal the "▼ show" button and bring it back.',
+  },
+  {
+    icon: '⛶',
+    title: 'Fullscreen & Zoom',
+    description: 'Double-tap the circle to enter fullscreen. Pinch on the circle (or trackpad pinch anywhere) to resize it. Tap once in fullscreen to show the exit button.',
   },
 ]
 
