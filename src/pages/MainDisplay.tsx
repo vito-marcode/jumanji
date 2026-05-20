@@ -8,6 +8,8 @@ import { TypewriterText } from '../components/TypewriterText'
 import { Spinner } from '../components/ui/Spinner'
 import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
+import { useSessionPresence } from '../hooks/useSessionPresence'
+import { SignalIcon } from '../components/SignalIcon'
 import type { Session } from '../types'
 
 const SPEED_PRESETS = [
@@ -37,7 +39,7 @@ const MAIN_STEPS: TutorialStep[] = [
   {
     icon: '👆',
     title: 'Hide & Reveal',
-    description: 'Tap or click outside this panel to hide it. Then tap inside the circle to reveal the "▼ show" button and bring it back.',
+    description: 'Tap or click outside this panel to hide it. Then tap inside the circle to reveal the "QR & Settings" button and bring it back.',
   },
   {
     icon: '⛶',
@@ -121,7 +123,10 @@ export default function MainDisplay() {
   const [circleSizePercent, setCircleSizePercent] = useState(() => Number(localStorage.getItem('jumanji_circle_size') ?? 100))
   const circleScaleRef = useRef(circleSizePercent / 100)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const connectionQuality = useSessionPresence(sessionCode ?? null)
   const currentPreset = SPEED_PRESETS[speedIndex]
+  const clientUrl = `${window.location.origin}/client/${sessionCode ?? ''}`
   circleScaleRef.current = circleSizePercent / 100
   circleSizePercentRef.current = circleSizePercent
   const effectiveCircleSize = circleSize * (circleSizePercent / 100)
@@ -340,62 +345,147 @@ export default function MainDisplay() {
             if (showTimerRef.current) clearTimeout(showTimerRef.current)
             setHeaderVisible(true)
           }}
-          className="absolute z-20 text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
+          className="absolute z-20 flex items-center gap-1.5 text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-950/70 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-800 hover:border-jungle-600 animate-fade-in"
           style={{
             top: effectiveCircleSize ? `calc(50% - ${(effectiveCircleSize * 0.707) / 2}px - 20px)` : 16,
             left: '50%',
             transform: 'translateX(-50%)',
           }}
         >
-          ▼ show
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="3" height="3" />
+            <rect x="18" y="14" width="3" height="3" />
+            <rect x="14" y="18" width="3" height="3" />
+            <rect x="18" y="18" width="3" height="3" />
+          </svg>
+          QR &amp; Settings
         </button>
       )}
 
-      {/* Top bar — QR + code */}
+      {/* Header panel */}
       {headerVisible && (
-        <header className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 p-6 rounded-xl border border-jungle-700 bg-jungle-950/90 backdrop-blur-sm shadow-2xl w-[90vw] max-w-xl animate-fade-in" onClick={e => e.stopPropagation()}>
-          <div className="flex flex-col gap-1 items-center text-center">
-            <h1 className="font-cinzel_deco text-gold-300 text-xl font-bold text-glow-gold">JUMANJI</h1>
-            <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest">Main Display</p>
+        <header
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col rounded-xl border border-jungle-700/80 bg-jungle-950/95 backdrop-blur-sm shadow-2xl w-[92vw] max-w-md animate-fade-in overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Top bar: Home | signal | Close */}
+          <div className="relative flex items-center px-4 py-2.5 border-b border-jungle-800/60">
             <button
               onClick={() => navigate('/')}
-              className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest mt-2 transition-colors"
+              className="flex items-center gap-1.5 text-jungle-200 hover:text-jungle-50 text-[11px] font-cinzel uppercase tracking-widest transition-colors"
             >
-              ← Home
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Home
+            </button>
+
+            {/* Signal icon — centered */}
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <SignalIcon quality={connectionQuality} />
+            </div>
+
+            <button
+              onClick={hideHeader}
+              className="flex items-center gap-1.5 text-jungle-200 hover:text-jungle-50 text-[11px] font-cinzel uppercase tracking-widest transition-colors ml-auto"
+            >
+              Close
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-          <div className="flex items-center gap-4 flex-wrap justify-center">
-            <SessionCodeBadge code={sessionCode ?? ''} />
-            <QRCodeDisplay sessionCode={sessionCode ?? ''} />
-            <div className="flex items-center gap-2">
-              <button
-                onClick={tutorial.restart}
-                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
-              >
-                ? Help
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
-              >
-                {isFullscreen ? '⊡ exit' : '⛶ full'}
-              </button>
-              <button
-                onClick={() => setSettingsOpen(v => !v)}
-                className={`text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border hover:border-jungle-500 ${settingsOpen ? 'text-gold-400 border-gold-600' : 'text-jungle-200 hover:text-jungle-50 border-jungle-700'}`}
-              >
-                ⚙ speed
-              </button>
-              <button
-                onClick={hideHeader}
-                className="text-jungle-200 hover:text-jungle-50 text-xs font-cinzel uppercase tracking-widest transition-colors bg-jungle-900/80 backdrop-blur-sm px-2.5 py-1.5 rounded border border-jungle-700 hover:border-jungle-500"
-              >
-                ▲ hide
-              </button>
+
+          {/* Main content: stacks on mobile, side-by-side on sm+ */}
+          <div className="flex flex-col sm:flex-row items-stretch">
+            {/* QR column */}
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-4 border-b border-jungle-800/60 sm:border-b-0 sm:border-r">
+              <QRCodeDisplay sessionCode={sessionCode ?? ''} />
+              <span className="text-[11px] font-cinzel uppercase tracking-widest text-jungle-200">Scan to join</span>
+            </div>
+
+            {/* Session code + client link icons */}
+            <div className="flex flex-col justify-center gap-3 px-5 py-4 flex-1 min-w-0">
+              <SessionCodeBadge code={sessionCode ?? ''} />
+              <div className="flex items-center justify-center gap-2 pt-0.5">
+                <span className="text-[11px] font-cinzel uppercase tracking-widest text-jungle-200 mr-1">Client Link</span>
+                <button
+                  title="Copy join link"
+                  aria-label="Copy join link"
+                  onClick={() => {
+                    navigator.clipboard.writeText(clientUrl)
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                  }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${linkCopied ? 'text-gold-400 border-gold-700/60 bg-gold-950/20' : 'text-jungle-200 hover:text-jungle-50 border-jungle-700/60 hover:border-jungle-400 bg-jungle-900/40'}`}
+                >
+                  {linkCopied ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  )}
+                </button>
+                {typeof navigator.share === 'function' && (
+                  <button
+                    title="Share join link"
+                    aria-label="Share join link"
+                    onClick={() => navigator.share({ url: clientUrl })}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border text-jungle-200 hover:text-jungle-50 border-jungle-700/60 hover:border-jungle-400 bg-jungle-900/40 transition-all"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  </button>
+                )}
+                <a
+                  href={clientUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open client in new tab"
+                  aria-label="Open client in new tab"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border text-jungle-200 hover:text-jungle-50 border-jungle-700/60 hover:border-jungle-400 bg-jungle-900/40 transition-all"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
+
             </div>
           </div>
+
+          {/* Footer: utility controls */}
+          <div className="flex items-center border-t border-jungle-800/60 bg-jungle-950/40">
+            <button
+              onClick={tutorial.restart}
+              className="flex items-center gap-1.5 text-jungle-200 hover:text-jungle-50 text-[11px] font-cinzel uppercase tracking-widest transition-colors px-4 py-2.5 hover:bg-jungle-900/40 flex-1 justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Help
+            </button>
+            <div className="w-px h-4 bg-jungle-800/60 shrink-0" />
+            <button
+              onClick={toggleFullscreen}
+              className="flex items-center gap-1.5 text-jungle-200 hover:text-jungle-50 text-[11px] font-cinzel uppercase tracking-widest transition-colors px-4 py-2.5 hover:bg-jungle-900/40 flex-1 justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {isFullscreen ? (
+                  <><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></>
+                ) : (
+                  <><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></>
+                )}
+              </svg>
+              {isFullscreen ? 'Exit' : 'Fullscreen'}
+            </button>
+            <div className="w-px h-4 bg-jungle-800/60 shrink-0" />
+            <button
+              onClick={() => setSettingsOpen(v => !v)}
+              className={`flex items-center gap-1.5 text-[11px] font-cinzel uppercase tracking-widest transition-colors px-4 py-2.5 hover:bg-jungle-900/40 flex-1 justify-center ${settingsOpen ? 'text-gold-400' : 'text-jungle-200 hover:text-jungle-50'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Settings
+            </button>
+          </div>
+
+          {/* Settings panel */}
           {settingsOpen && (
-            <div className="w-full flex flex-col items-center gap-2 pt-3 border-t border-jungle-800">
+            <div className="w-full flex flex-col items-center gap-2 px-5 py-4 border-t border-jungle-800/60 bg-jungle-950/40">
               <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-widest">
                 Animation Speed — <span className="text-gold-400">{currentPreset.label}</span>
               </p>
@@ -481,6 +571,18 @@ export default function MainDisplay() {
             ].join(', '),
           }}
         />
+
+        {/* Connection quality tint */}
+        {(connectionQuality === 'poor' || connectionQuality === 'disconnected') && (
+          <div
+            className="absolute inset-0 rounded-full pointer-events-none transition-all duration-1000"
+            style={{
+              background: connectionQuality === 'poor'
+                ? 'radial-gradient(circle at 50% 50%, rgba(251,191,36,0.20) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(239,68,68,0.60) 0%, transparent 70%)',
+            }}
+          />
+        )}
 
         <div
           className="flex items-center justify-center"

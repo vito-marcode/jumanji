@@ -11,6 +11,8 @@ import { Input } from '../components/ui/Input'
 import { Spinner } from '../components/ui/Spinner'
 import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
+import { useSessionPresence } from '../hooks/useSessionPresence'
+import { SignalIcon } from '../components/SignalIcon'
 import type { Collection, Session } from '../types'
 
 const CLIENT_STEPS: TutorialStep[] = [
@@ -52,6 +54,7 @@ export default function ClientDevice() {
   const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption, updateOption } =
     useCollections(session?.id ?? null)
   const { sendMessage, clearDisplay } = useDisplayMessages(session?.id ?? null)
+  const connectionQuality = useSessionPresence(sessionCode ?? null)
 
   useEffect(() => {
     if (!sessionCode) return
@@ -101,13 +104,18 @@ export default function ClientDevice() {
   return (
     <div className="min-h-screen bg-jungle-950 flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-jungle-800 bg-jungle-900/60">
+      <header className="relative flex items-center justify-between px-4 py-3 border-b border-jungle-800 bg-jungle-900/60">
         <div>
           <h1 className="font-cinzel text-gold-300 font-bold text-base">JUMANJI</h1>
           <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-wider">
             Session: {sessionCode}
           </p>
         </div>
+        {/* Signal icon — centered */}
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <SignalIcon quality={connectionQuality} />
+        </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={tutorial.restart}
