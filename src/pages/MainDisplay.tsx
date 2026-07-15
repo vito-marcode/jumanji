@@ -98,7 +98,18 @@ export default function MainDisplay() {
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
   const [loadingSession, setLoadingSession] = useState(true)
-  const [headerVisible, setHeaderVisible] = useState(true)
+  // Whether this session code was already visited before (persisted in jumanji_sessions).
+  const [isReturnVisit] = useState(() => {
+    try {
+      const stored: { code: string }[] = JSON.parse(localStorage.getItem('jumanji_sessions') ?? '[]')
+      return stored.some(s => s.code === (sessionCode ?? '').toUpperCase())
+    } catch {
+      return false
+    }
+  })
+  // Auto-open the header (QR & settings) only on the first visit to a session.
+  // On return visits it stays hidden — reveal it by tapping the circle.
+  const [headerVisible, setHeaderVisible] = useState(!isReturnVisit)
   const tutorial = useTutorial('main', MAIN_STEPS.length)
 
   const { latestMessage } = useDisplayMessages(session?.id ?? null)
@@ -203,6 +214,14 @@ export default function MainDisplay() {
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     }
   }, [headerVisible])
+
+  // On a return visit, try to enter fullscreen automatically. Browsers reject
+  // requestFullscreen() without a preceding user gesture, so this only succeeds in
+  // kiosk/PWA/permission-granted contexts; elsewhere it fails silently (stays windowed).
+  useEffect(() => {
+    if (!isReturnVisit || document.fullscreenElement) return
+    document.documentElement.requestFullscreen?.().catch(() => {})
+  }, [isReturnVisit])
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement)
