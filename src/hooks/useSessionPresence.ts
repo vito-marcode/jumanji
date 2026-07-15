@@ -1,24 +1,27 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useTransport } from './useTransport'
+import type { ConnectionQuality } from '../lib/transport/types'
 
-export type ConnectionQuality = 'connecting' | 'good' | 'poor' | 'disconnected'
+// Re-exported so existing importers (e.g. SignalIcon) keep working unchanged.
+export type { ConnectionQuality } from '../lib/transport/types'
 
-export function useSessionPresence(sessionCode: string | null): ConnectionQuality {
+/**
+ * Reports the connection quality of the active transport. Thin adapter — the
+ * real logic lives in each Transport implementation (Supabase heartbeat channel
+ * or WebRTC datachannel/ICE state).
+ */
+export function useSessionPresence(): ConnectionQuality {
+  const { transport } = useTransport()
   const [quality, setQuality] = useState<ConnectionQuality>('connecting')
 
   useEffect(() => {
-    if (!sessionCode) return
-
-    const channel = supabase.channel(`heartbeat-${sessionCode.toUpperCase()}`)
-
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') setQuality('good')
-      else if (status === 'TIMED_OUT') setQuality('poor')
-      else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') setQuality('disconnected')
-    })
-
-    return () => { supabase.removeChannel(channel) }
-  }, [sessionCode])
+    if (!transport) {
+      setQuality('connecting')
+      return
+    }
+    setQuality(transport.getQuality())
+    return transport.onQualityChange(setQuality)
+  }, [transport])
 
   return quality
 }

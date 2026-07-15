@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import { useCollections } from '../hooks/useCollections'
 import { useDisplayMessages } from '../hooks/useDisplayMessages'
+import { useTransport } from '../hooks/useTransport'
 import { CollectionCard } from '../components/CollectionCard'
 import { SelectionModePanel } from '../components/SelectionModePanel'
 import { Button } from '../components/ui/Button'
@@ -13,7 +13,8 @@ import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
 import { useSessionPresence } from '../hooks/useSessionPresence'
 import { SignalIcon } from '../components/SignalIcon'
-import type { Collection, Session } from '../types'
+import { ConnectionBanner } from '../components/ConnectionBanner'
+import type { Collection } from '../types'
 
 const CLIENT_STEPS: TutorialStep[] = [
   {
@@ -39,11 +40,9 @@ const CLIENT_STEPS: TutorialStep[] = [
 ]
 
 export default function ClientDevice() {
-  const { sessionCode } = useParams<{ sessionCode: string }>()
   const navigate = useNavigate()
+  const { sessionCode, sessionId, loadingSession } = useTransport()
 
-  const [session, setSession] = useState<Session | null>(null)
-  const [loadingSession, setLoadingSession] = useState(true)
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
   const [showNewCollectionModal, setShowNewCollectionModal] = useState(false)
   const [newCollectionName, setNewCollectionName] = useState('')
@@ -52,23 +51,9 @@ export default function ClientDevice() {
   const tutorial = useTutorial('client', CLIENT_STEPS.length)
 
   const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption, updateOption } =
-    useCollections(session?.id ?? null)
-  const { sendMessage, clearDisplay } = useDisplayMessages(session?.id ?? null)
-  const connectionQuality = useSessionPresence(sessionCode ?? null)
-
-  useEffect(() => {
-    if (!sessionCode) return
-    supabase
-      .from('sessions')
-      .select()
-      .eq('code', sessionCode.toUpperCase())
-      .single()
-      .then(({ data, error }) => {
-        setLoadingSession(false)
-        if (error || !data) navigate('/')
-        else setSession(data as Session)
-      })
-  }, [sessionCode, navigate])
+    useCollections(sessionId)
+  const { sendMessage, clearDisplay } = useDisplayMessages()
+  const connectionQuality = useSessionPresence()
 
   // Keep selectedCollection in sync when collections update
   useEffect(() => {
@@ -103,6 +88,7 @@ export default function ClientDevice() {
 
   return (
     <div className="min-h-screen bg-jungle-950 flex flex-col">
+      <ConnectionBanner />
       {/* Header */}
       <header className="relative flex items-center justify-between px-4 py-3 border-b border-jungle-800 bg-jungle-900/60">
         <div>

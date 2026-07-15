@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayMessages } from '../hooks/useDisplayMessages'
+import { useTransport } from '../hooks/useTransport'
 import { QRCodeDisplay } from '../components/QRCodeDisplay'
 import { SessionCodeBadge } from '../components/SessionCodeBadge'
 import { TypewriterText } from '../components/TypewriterText'
@@ -10,7 +10,7 @@ import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
 import { useSessionPresence } from '../hooks/useSessionPresence'
 import { SignalIcon } from '../components/SignalIcon'
-import type { Session } from '../types'
+import { ConnectionBanner } from '../components/ConnectionBanner'
 
 const SPEED_PRESETS = [
   { label: 'Mystic',  charDelay: 220, animDuration: 10000 },
@@ -94,10 +94,8 @@ function calcFontSize(text: string, boxWidth: number, boxHeight: number = boxWid
 }
 
 export default function MainDisplay() {
-  const { sessionCode } = useParams<{ sessionCode: string }>()
   const navigate = useNavigate()
-  const [session, setSession] = useState<Session | null>(null)
-  const [loadingSession, setLoadingSession] = useState(true)
+  const { sessionCode, session, loadingSession } = useTransport()
   // Whether this session code was already visited before (persisted in jumanji_sessions).
   const [isReturnVisit] = useState(() => {
     try {
@@ -112,7 +110,7 @@ export default function MainDisplay() {
   const [headerVisible, setHeaderVisible] = useState(!isReturnVisit)
   const tutorial = useTutorial('main', MAIN_STEPS.length)
 
-  const { latestMessage } = useDisplayMessages(session?.id ?? null)
+  const { latestMessage } = useDisplayMessages()
 
   const [displayText, setDisplayText] = useState<string | null>(null)
   const [circleSize, setCircleSize] = useState(0)
@@ -135,26 +133,12 @@ export default function MainDisplay() {
   const circleScaleRef = useRef(circleSizePercent / 100)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
-  const connectionQuality = useSessionPresence(sessionCode ?? null)
+  const connectionQuality = useSessionPresence()
   const currentPreset = SPEED_PRESETS[speedIndex]
   const clientUrl = `${window.location.origin}/client/${sessionCode ?? ''}`
   circleScaleRef.current = circleSizePercent / 100
   circleSizePercentRef.current = circleSizePercent
   const effectiveCircleSize = circleSize * (circleSizePercent / 100)
-
-  useEffect(() => {
-    if (!sessionCode) return
-    supabase
-      .from('sessions')
-      .select()
-      .eq('code', sessionCode.toUpperCase())
-      .single()
-      .then(({ data, error }) => {
-        setLoadingSession(false)
-        if (error || !data) navigate('/')
-        else setSession(data as Session)
-      })
-  }, [sessionCode, navigate])
 
   // Save session to localStorage when loaded
   useEffect(() => {
@@ -351,6 +335,7 @@ export default function MainDisplay() {
       className="min-h-screen bg-jungle-950 flex flex-col relative overflow-hidden"
       onClick={() => { if (headerVisible) hideHeader() }}
     >
+      <ConnectionBanner />
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-jungle-800/10 blur-3xl" />
