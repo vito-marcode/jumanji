@@ -31,9 +31,19 @@ Controllers send content through two modes:
 - **React 18 + TypeScript** — strict mode, functional components only
 - **Vite** — dev server and production builds
 - **Tailwind CSS** — custom jungle/gold color palettes and animations
-- **Supabase** — Postgres database + real-time Change Streams
+- **Supabase** — Postgres database + real-time Change Streams (also used to signal P2P connections)
+- **WebRTC** — peer-to-peer data channels for direct, low-latency, offline-resilient messaging
+- **PWA** — installable, works offline (`vite-plugin-pwa` + Workbox)
 - **React Router v6** — client-side routing
 - **Netlify** — deployment (SPA redirect via `netlify.toml`)
+
+## Install & Offline
+
+Jumanji is a **PWA**: install it from the browser (Add to Home Screen / Install app) on both the main screen and the controllers. Once installed, the app shell loads without internet.
+
+Messaging uses a **peer-to-peer WebRTC** link between the main screen and controllers whenever possible, with Supabase as the fallback. The devices pair while a connection is available (even briefly); the P2P link then keeps working over the local network **even if the internet drops mid-session**.
+
+> **Note:** because a browser can't send data over Bluetooth or Wi-Fi Direct, and a camera-less main screen (TV/projector) has no way to complete the WebRTC handshake with zero connectivity, pairing *from scratch* requires an initial connection. Reliable offline operation: put all devices on the same Wi-Fi/hotspot, pair once, then the connection survives an internet outage. A phone hotspot is the most reliable local network (guest/enterprise Wi-Fi may block device-to-device traffic).
 
 ## Setup
 
