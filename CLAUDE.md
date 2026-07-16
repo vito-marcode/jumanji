@@ -55,6 +55,8 @@ Cross-device messaging goes through a **transport abstraction** (`src/lib/transp
 - `SupabaseSignaling` — WebRTC signaling via Supabase Realtime **Broadcast** on `signal-<CODE>` (offer/answer routed per client `peer` id).
 - `OrchestratedTransport` — composes both: pairs over signaling while online, **prefers P2P once a data channel is open**, and falls back to Supabase otherwise. An established P2P link **survives an internet drop**.
 
+**Reconnection:** the main broadcasts a `hello` on startup so already-open clients re-join immediately (covers a main reload/restart); clients also re-join automatically when their data channel closes or the connection fails. `TransportProvider` rebuilds the transport when connectivity returns after an offline start (never on going offline — that would tear down a live P2P link). A **full offline cold start can't re-pair** on a camera-less main: establishing WebRTC needs signaling, and offline there's no signaling channel (Supabase needs internet; QR needs a camera). Once connectivity returns, pairing happens automatically.
+
 `TransportProvider` / `useTransport` (`hooks/useTransport.tsx`) probe connectivity, resolve the session (online: Supabase lookup by code → UUID; offline: use the code directly, no redirect), and build the transport. `useDisplayMessages` and `useSessionPresence` read the transport from context.
 
 **Offline limitation:** the main display is a camera-less screen (TV/projector), so pairing *from scratch* with no internet isn't possible in a browser (no channel to return the WebRTC answer). Pair while connectivity exists; the link then keeps working offline. `ConnectionBanner` surfaces this when the app loads offline.

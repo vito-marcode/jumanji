@@ -38,6 +38,8 @@ interface WebRTCTransportOptions {
   iceServers: RTCIceServer[]
 }
 
+const CLIENT_KEY = 'main'
+
 // Peer-to-peer transport over WebRTC data channels, star topology:
 // - main  = hub, one RTCPeerConnection per client (2–5), it is the offerer.
 // - client = spoke, one connection to the main, it answers.
@@ -51,18 +53,25 @@ export class WebRTCTransport implements Transport {
   private qualityHandlers = new Set<(q: ConnectionQuality) => void>()
   private quality: ConnectionQuality = 'connecting'
   private unsub: (() => void) | null = null
+  private closed = false
 
   // client-only
   private myId = ''
   private retryTimer: ReturnType<typeof setInterval> | null = null
-  private giveupTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor({ role, signaling, iceServers }: WebRTCTransportOptions) {
     this.role = role
     this.signaling = signaling
     this.iceServers = iceServers
     this.unsub = signaling.onMessage((msg) => this.onSignal(msg))
-    if (role === 'client') this.startClientFlow()
+    if (role === 'client') {
+      this.myId = randomId()
+      this.startJoining()
+    } else {
+      // Announce presence so already-open clients re-join right away (covers a
+      // main restart/reload without waiting for the client's stale link to fail).
+      this.signaling.send({ t: 'hello' })
+    }
   }
 
   private onSignal(msg: SignalMessage) {
@@ -72,6 +81,8 @@ export class WebRTCTransport implements Transport {
       else if (msg.t === 'leave') this.handleLeave(msg.peer)
     } else {
       if (msg.t === 'offer') void this.handleOffer(msg.peer, msg.sdp)
+      // A fresh main appeared → drop any stale link and re-join immediately.
+      else if (msg.t === 'hello') this.reconnectClient()
     }
   }
 
@@ -93,7 +104,13 @@ export class WebRTCTransport implements Transport {
     const dc = pc.createDataChannel('display', { ordered: true })
     entry.dc = dc
     this.wireChannel(dc)
-    pc.onconnectionstatechange = () => this.recomputeQuality()
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        // Drop the dead peer so the client's next join re-pairs cleanly.
+        this.peers.delete(peerId)
+      }
+      this.recomputeQuality()
+    }
     pc.oniceconnectionstatechange = () => this.recomputeQuality()
 
     const offer = await pc.createOffer()
@@ -127,47 +144,66 @@ export class WebRTCTransport implements Transport {
 
   // ---- client (spoke) ----
 
-  private startClientFlow() {
-    this.myId = randomId()
+  // (Re)start the join loop: broadcast join now and every 2s until a data
+  // channel is open. Safe to call repeatedly (used for reconnection).
+  private startJoining() {
+    if (this.closed) return
+    this.stopJoining()
     const join = () => this.signaling.send({ t: 'join', peer: this.myId })
     join()
     this.retryTimer = setInterval(() => {
       if (this.hasOpenChannel()) {
-        this.stopClientRetry()
+        this.stopJoining()
         return
       }
       join()
     }, 2000)
-    // Give up after a minute of no connection.
-    this.giveupTimer = setTimeout(() => {
-      this.stopClientRetry()
-      if (!this.hasOpenChannel()) this.setQuality('disconnected')
-    }, 60000)
   }
 
-  private stopClientRetry() {
-    if (this.retryTimer) { clearInterval(this.retryTimer); this.retryTimer = null }
-    if (this.giveupTimer) { clearTimeout(this.giveupTimer); this.giveupTimer = null }
+  private stopJoining() {
+    if (this.retryTimer) {
+      clearInterval(this.retryTimer)
+      this.retryTimer = null
+    }
+  }
+
+  // Tear down the (stale) link to the main and start re-joining from scratch.
+  private reconnectClient() {
+    if (this.closed || this.role !== 'client') return
+    const existing = this.peers.get(CLIENT_KEY)
+    if (existing) {
+      try { existing.dc?.close() } catch { /* noop */ }
+      try { existing.pc.close() } catch { /* noop */ }
+      this.peers.delete(CLIENT_KEY)
+    }
+    this.recomputeQuality()
+    this.startJoining()
   }
 
   private async handleOffer(peerId: string, sdp: RTCSessionDescriptionInit) {
     if (peerId !== this.myId) return // offer targeted at another client
-    const existing = this.peers.get('main')
+    const existing = this.peers.get(CLIENT_KEY)
     if (existing) {
       const st = existing.pc.connectionState
       const open = existing.dc?.readyState === 'open'
       if (open || st === 'connected' || st === 'connecting') return // already handling
       try { existing.pc.close() } catch { /* noop */ }
-      this.peers.delete('main')
+      this.peers.delete(CLIENT_KEY)
     }
     const pc = new RTCPeerConnection({ iceServers: this.iceServers })
     const entry: Peer = { pc, dc: null }
-    this.peers.set('main', entry)
+    this.peers.set(CLIENT_KEY, entry)
     pc.ondatachannel = (e) => {
       entry.dc = e.channel
       this.wireChannel(e.channel)
     }
-    pc.onconnectionstatechange = () => this.recomputeQuality()
+    pc.onconnectionstatechange = () => {
+      // Lost the link to the main → re-join (the main may have restarted).
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        if (this.peers.get(CLIENT_KEY)?.pc === pc) this.startJoining()
+      }
+      this.recomputeQuality()
+    }
     pc.oniceconnectionstatechange = () => this.recomputeQuality()
 
     await pc.setRemoteDescription(sdp)
@@ -181,12 +217,16 @@ export class WebRTCTransport implements Transport {
 
   private wireChannel(dc: RTCDataChannel) {
     dc.onopen = () => {
-      if (this.role === 'client') this.stopClientRetry()
+      if (this.role === 'client') this.stopJoining()
       // eslint-disable-next-line no-console
       console.info(`[jumanji] WebRTC data channel open — P2P active (${this.role})`)
       this.recomputeQuality()
     }
-    dc.onclose = () => this.recomputeQuality()
+    dc.onclose = () => {
+      // On the client, a closed channel means the main went away → re-join.
+      if (this.role === 'client' && !this.closed) this.startJoining()
+      this.recomputeQuality()
+    }
     dc.onerror = () => this.recomputeQuality()
     dc.onmessage = (e) => {
       try {
@@ -208,9 +248,11 @@ export class WebRTCTransport implements Transport {
       this.setQuality('good')
       return
     }
+    // Client is always trying to (re)connect while open, so report 'connecting'
+    // rather than 'disconnected' unless every peer connection has hard-failed.
     const states = [...this.peers.values()].map((p) => p.pc.connectionState)
     if (states.length > 0 && states.every((s) => s === 'failed' || s === 'closed')) {
-      this.setQuality('disconnected')
+      this.setQuality(this.role === 'client' && this.retryTimer ? 'connecting' : 'disconnected')
       return
     }
     this.setQuality('connecting')
@@ -249,7 +291,8 @@ export class WebRTCTransport implements Transport {
   }
 
   close() {
-    this.stopClientRetry()
+    this.closed = true
+    this.stopJoining()
     if (this.role === 'client' && this.myId) this.signaling.send({ t: 'leave', peer: this.myId })
     if (this.unsub) this.unsub()
     for (const p of this.peers.values()) {
