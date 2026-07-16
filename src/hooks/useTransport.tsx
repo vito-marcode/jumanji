@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { OrchestratedTransport } from '../lib/transport/OrchestratedTransport'
-import { isInternetReachable } from '../lib/net'
+import { isInternetReachable, onConnectivityChange } from '../lib/net'
 import type { Transport, TransportRole } from '../lib/transport/types'
 import type { Session } from '../types'
 
@@ -17,7 +17,7 @@ interface TransportContextValue {
   /** Active transport (Supabase + WebRTC, orchestrated). */
   transport: Transport | null
   loadingSession: boolean
-  /** Internet reachable at load: true/false, or null while probing. */
+  /** Internet reachable: true/false, or null while probing. */
   online: boolean | null
 }
 
@@ -40,62 +40,88 @@ export function TransportProvider({ role, children }: { role: TransportRole; chi
   const [loadingSession, setLoadingSession] = useState(true)
   const [transport, setTransport] = useState<Transport | null>(null)
 
-  // Step 1 — probe connectivity, then resolve the session.
-  // Online: look up the Supabase row (missing → redirect home, as before).
-  // Offline: skip the lookup and use the code itself as the room identity;
-  // never redirect (that was the "app won't even load offline" bug).
+  const transportRef = useRef<Transport | null>(null)
+  const builtOnlineRef = useRef<boolean | null>(null)
+  const sessionIdRef = useRef<string | null>(null)
+  sessionIdRef.current = sessionId
+
   useEffect(() => {
     if (!sessionCode) {
       setLoadingSession(false)
       return
     }
     let cancelled = false
+
+    const build = (isOnline: boolean) => {
+      if (cancelled) return
+      transportRef.current?.close()
+      const t = new OrchestratedTransport({
+        role,
+        sessionCode,
+        sessionId: sessionIdRef.current,
+        online: isOnline,
+      })
+      transportRef.current = t
+      builtOnlineRef.current = isOnline
+      setTransport(t)
+    }
+
+    // Look up the Supabase session row (online only) to obtain its UUID.
+    const resolveSession = async (): Promise<boolean> => {
+      const { data, error } = await supabase.from('sessions').select().eq('code', sessionCode).single()
+      if (cancelled) return false
+      if (error || !data) return false
+      setSession(data as Session)
+      setSessionId((data as Session).id)
+      sessionIdRef.current = (data as Session).id
+      return true
+    }
+
+    // Initial: probe connectivity, resolve the session, build the transport.
+    // Online: a missing session row redirects home (as before).
+    // Offline: use the code directly, no redirect (so the app still loads).
     ;(async () => {
       const reachable = await isInternetReachable()
       if (cancelled) return
       setOnline(reachable)
       if (reachable) {
-        const { data, error } = await supabase.from('sessions').select().eq('code', sessionCode).single()
+        const ok = await resolveSession()
         if (cancelled) return
         setLoadingSession(false)
-        if (error || !data) {
+        if (!ok) {
           navigate('/')
           return
         }
-        setSession(data as Session)
-        setSessionId((data as Session).id)
       } else {
         setLoadingSession(false)
       }
+      build(reachable)
     })()
+
+    // React to connectivity changes. Only act on offline→online recovery: rebuild
+    // so pairing (which needs signaling) can happen once the network is back —
+    // without a manual refresh. Never rebuild on online→offline: an established
+    // P2P link runs over the LAN and must survive the internet dropping.
+    const unsub = onConnectivityChange(async (nowOnline) => {
+      if (cancelled) return
+      if (!nowOnline || builtOnlineRef.current === true) return
+      if (!sessionIdRef.current) await resolveSession()
+      if (cancelled) return
+      setOnline(true)
+      build(true)
+    })
+
     return () => {
       cancelled = true
-    }
-  }, [sessionCode, navigate])
-
-  // Step 2 — build the transport once connectivity is known (and, when online,
-  // the session id is resolved).
-  useEffect(() => {
-    if (online === null) return // still probing
-    if (online && !sessionId) return // online but session not resolved yet
-    const t = new OrchestratedTransport({ role, sessionCode, sessionId, online })
-    setTransport(t)
-    return () => {
-      t.close()
+      unsub()
+      transportRef.current?.close()
+      transportRef.current = null
       setTransport(null)
     }
-  }, [online, sessionId, role, sessionCode])
+  }, [sessionCode, navigate, role])
 
   const value = useMemo<TransportContextValue>(
-    () => ({
-      role,
-      sessionCode,
-      session,
-      sessionId,
-      transport,
-      loadingSession,
-      online,
-    }),
+    () => ({ role, sessionCode, session, sessionId, transport, loadingSession, online }),
     [role, sessionCode, session, sessionId, transport, loadingSession, online],
   )
 

@@ -8,6 +8,10 @@
 // the 2–5 clients from cross-talking on the shared channel.
 
 export type SignalMessage =
+  // Broadcast by the main on startup so already-open clients re-join immediately
+  // (e.g. after the main page is reloaded/restarted) instead of waiting for their
+  // stale connection to time out.
+  | { t: 'hello' }
   | { t: 'join'; peer: string }
   | { t: 'offer'; peer: string; sdp: RTCSessionDescriptionInit }
   | { t: 'answer'; peer: string; sdp: RTCSessionDescriptionInit }
