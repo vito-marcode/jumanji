@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from './ui/Button'
-import { Card } from './ui/Card'
+import type { PointerEvent as ReactPointerEvent } from 'react'
+import { createPortal } from 'react-dom'
 import type { Collection, Option } from '../types'
 
 type Mode = 'manual' | 'random'
@@ -20,8 +20,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
   )
   const [rolledOption, setRolledOption] = useState<Option | null>(null)
   const [revealPhase, setRevealPhase] = useState<RevealPhase>('idle')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [previewOption, setPreviewOption] = useState<Option | null>(null)
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const options = collection.options ?? []
@@ -31,6 +30,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
     setSelectedIds(new Set((collection.options ?? []).map(o => o.id)))
     setRolledOption(null)
     setRevealPhase('idle')
+    setPreviewOption(null)
     if (revealTimer.current) clearTimeout(revealTimer.current)
   }, [collection.id])
 
@@ -54,7 +54,16 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
     revealTimer.current = setTimeout(() => {
       setRolledOption(picked)
       setRevealPhase('suspense')
-      revealTimer.current = setTimeout(() => setRevealPhase('revealed'), REVEAL_DELAY_MS)
+      revealTimer.current = setTimeout(() => {
+        setRevealPhase('revealed')
+        // Deselect the extracted option only now, in sync with the reveal,
+        // so unchecking it doesn't spoil which option was picked.
+        setSelectedIds(prev => {
+          const next = new Set(prev)
+          next.delete(picked.id)
+          return next
+        })
+      }, REVEAL_DELAY_MS)
     }, 50)
   }
 
@@ -78,13 +87,11 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
     )
   }
 
-  // Manual mode send (user-controlled, keeps send button)
-  async function handleManualSend(text: string) {
-    setSending(true)
-    await onSend(text)
-    setSending(false)
-    setSent(true)
-    setTimeout(() => setSent(false), 2000)
+  // Manual mode: confirm-and-send from the preview sheet
+  async function handleConfirmSend() {
+    if (!previewOption) return
+    await onSend(previewOption.text)
+    setPreviewOption(null)
   }
 
   function switchMode(m: Mode) {
@@ -92,7 +99,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
     setMode(m)
     setRolledOption(null)
     setRevealPhase('idle')
-    setSent(false)
+    setPreviewOption(null)
   }
 
   const tabs: { id: Mode; label: string }[] = [
@@ -101,7 +108,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
   ]
 
   return (
-    <Card glow="green" className="p-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex gap-1">
         {tabs.map((tab) => (
           <button
@@ -120,25 +127,25 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
 
       <p className="text-jungle-200 text-sm">
         {mode === 'manual'
-          ? 'Tap an option to send it instantly to the main screen.'
-          : 'Select options below, then roll the dice — a random pick will appear on the main screen.'}
+          ? 'Tap an option to send it to the main screen.'
+          : 'Select options below, then slide to roll — a random pick will appear on the main screen.'}
       </p>
 
       {/* ── Manual ── */}
       {mode === 'manual' && (
-        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+        <div className="flex flex-col gap-2">
           {options.length === 0 && (
             <p className="text-jungle-200 text-sm text-center py-4">No options yet. Add some above.</p>
           )}
           {options.map((opt) => (
             <button
               key={opt.id}
-              onClick={() => handleManualSend(opt.text)}
-              disabled={sending}
-              className="text-left px-3 py-3 rounded border border-jungle-700 hover:border-gold-500 bg-jungle-800 hover:bg-jungle-700 text-jungle-100 text-sm transition-all active:scale-95 disabled:opacity-50"
+              onClick={() => setPreviewOption(opt)}
+              className="flex items-center gap-2 text-left px-3 py-3 rounded border border-jungle-700 hover:border-gold-500 bg-jungle-800 hover:bg-jungle-700 text-jungle-100 text-sm transition-all active:scale-95"
             >
-              <span className="text-jungle-200 text-xs mr-2">{opt.position + 1}.</span>
-              {opt.text}
+              <span className="text-jungle-200 text-xs">{opt.position + 1}.</span>
+              <span className="flex-1">{opt.text}</span>
+              <span className="text-jungle-300 shrink-0" aria-hidden>›</span>
             </button>
           ))}
         </div>
@@ -147,6 +154,17 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
       {/* ── Random Segment ── */}
       {mode === 'random' && (
         <div className="flex flex-col gap-3">
+          <SlideToSend
+            onConfirm={rollSegment}
+            disabled={selectedIds.size === 0 || revealPhase === 'suspense'}
+            label="🎲 Slide to roll & send →"
+            resetOnConfirm
+          />
+
+          {rolledOption && revealPhase !== 'idle' && (
+            <RandomReveal option={rolledOption} phase={revealPhase} />
+          )}
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-wider">
               {selectedIds.size}/{options.length} selected
@@ -159,7 +177,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
             </button>
           </div>
 
-          <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
+          <div className="flex flex-col gap-1.5">
             {options.length === 0 && (
               <p className="text-jungle-200 text-sm text-center py-4">No options yet.</p>
             )}
@@ -186,25 +204,209 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
               )
             })}
           </div>
-
-          <Button
-            variant="primary"
-            size="md"
-            onClick={rollSegment}
-            disabled={selectedIds.size === 0 || revealPhase === 'suspense'}
-            className="w-full"
-          >
-            🎲 Roll from selection
-          </Button>
-
-          {rolledOption && revealPhase !== 'idle' && (
-            <RandomReveal option={rolledOption} phase={revealPhase} />
-          )}
         </div>
       )}
 
+      {/* ── Manual send sheet ── */}
+      {previewOption && (
+        <SendSheet
+          option={previewOption}
+          onConfirm={handleConfirmSend}
+          onClose={() => setPreviewOption(null)}
+        />
+      )}
+    </div>
+  )
+}
 
-    </Card>
+function SendSheet({
+  option,
+  onConfirm,
+  onClose,
+}: {
+  option: Option
+  onConfirm: () => Promise<void> | void
+  onClose: () => void
+}) {
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Backdrop — tap outside to dismiss */}
+      <div
+        className="absolute inset-0 bg-black/60 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div className="relative w-full max-w-md max-h-[88vh] bg-jungle-900 border-t border-jungle-700 rounded-t-3xl p-6 pb-8 flex flex-col gap-6 animate-slide-up shadow-2xl">
+        {/* Grab handle */}
+        <div className="mx-auto w-10 h-1 rounded-full bg-jungle-600 shrink-0" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between shrink-0">
+          <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
+            Send this message
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-jungle-200 hover:text-jungle-50 hover:bg-jungle-800 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Preview — scrolls if the message is long */}
+        <div className="flex-1 min-h-0 overflow-y-auto rounded-2xl border border-jungle-700 bg-jungle-950/60 px-6 py-8 flex items-center justify-center">
+          <p className="font-cinzel text-gold-300 text-2xl font-semibold break-words text-center w-full">
+            {option.text}
+          </p>
+        </div>
+
+        {/* Slide to send */}
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <SlideToSend onConfirm={onConfirm} />
+          <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
+            Drag to the end
+          </span>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// Best-effort haptics — supported on Android Chrome; a no-op on iOS Safari.
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    navigator.vibrate(pattern)
+  }
+}
+
+function SlideToSend({
+  onConfirm,
+  disabled = false,
+  label = 'Slide to send →',
+  resetOnConfirm = false,
+}: {
+  onConfirm: () => Promise<void> | void
+  disabled?: boolean
+  label?: string
+  resetOnConfirm?: boolean
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const draggingRef = useRef(false)
+  const maxRef = useRef(0)
+  const xRef = useRef(0)
+  const armedRef = useRef(false)
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [x, setX] = useState(0)
+  const [confirmed, setConfirmed] = useState(false)
+
+  const KNOB = 56 // px
+
+  useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current) }, [])
+
+  function maxOffset() {
+    const track = trackRef.current
+    return track ? Math.max(0, track.clientWidth - KNOB - 8) : 0
+  }
+
+  function reset() {
+    xRef.current = 0
+    setX(0)
+    setConfirmed(false)
+  }
+
+  function onPointerDown(e: ReactPointerEvent) {
+    if (confirmed || disabled) return
+    draggingRef.current = true
+    armedRef.current = false
+    maxRef.current = maxOffset()
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function onPointerMove(e: ReactPointerEvent) {
+    if (!draggingRef.current) return
+    const track = trackRef.current
+    if (!track) return
+    const rect = track.getBoundingClientRect()
+    const next = Math.max(0, Math.min(e.clientX - rect.left - KNOB / 2, maxRef.current))
+    xRef.current = next
+    // Light tick the first time the knob crosses the "release to confirm" line.
+    const armed = maxRef.current > 0 && next >= maxRef.current - 6
+    if (armed !== armedRef.current) {
+      armedRef.current = armed
+      if (armed) vibrate(10)
+    }
+    setX(next)
+  }
+
+  function onPointerUp() {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    const max = maxRef.current
+    if (max > 0 && xRef.current >= max - 6) {
+      xRef.current = max
+      setX(max)
+      setConfirmed(true)
+      vibrate([15, 40, 25]) // confirm buzz
+      onConfirm()
+      if (resetOnConfirm) {
+        resetTimer.current = setTimeout(reset, 450)
+      }
+    } else {
+      xRef.current = 0
+      setX(0)
+    }
+    armedRef.current = false
+  }
+
+  const progress = maxRef.current > 0 ? x / maxRef.current : 0
+
+  return (
+    <div
+      ref={trackRef}
+      className={`relative w-full h-16 rounded-full border border-jungle-600 bg-jungle-950/60 overflow-hidden select-none transition-opacity ${
+        disabled ? 'opacity-40' : ''
+      }`}
+    >
+      {/* Green fill trailing the knob */}
+      <div
+        className="absolute inset-y-0 left-0 rounded-full bg-gold-500/80"
+        style={{ width: x + KNOB + 4, transition: draggingRef.current ? 'none' : 'width 200ms ease' }}
+      />
+
+      {/* Prompt text — fades as you slide */}
+      <span
+        className="absolute inset-0 flex items-center justify-center text-sm font-cinzel text-jungle-200 uppercase tracking-widest pointer-events-none"
+        style={{ opacity: confirmed ? 0 : 1 - progress }}
+      >
+        {label}
+      </span>
+
+      {/* Knob */}
+      <div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        className={`absolute top-1 left-1 w-14 h-14 rounded-full bg-gold-400 text-jungle-950 flex items-center justify-center text-2xl touch-none shadow-lg ${
+          disabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
+        }`}
+        style={{ transform: `translateX(${x}px)`, transition: draggingRef.current ? 'none' : 'transform 200ms ease' }}
+      >
+        {confirmed ? '✓' : '→'}
+      </div>
+    </div>
   )
 }
 
