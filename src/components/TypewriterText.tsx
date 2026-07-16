@@ -7,8 +7,17 @@ interface TypewriterTextProps {
   onComplete?: () => void
 }
 
+// Final materialize keyframe glow — applied statically to settled characters so we can
+// drop their compositing layer (will-change/translateZ) without changing how they look.
+const SETTLED_SHADOW = '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)'
+
 export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onComplete }: TypewriterTextProps) {
   const [revealedCount, setRevealedCount] = useState(0)
+  // How many characters have finished their materialize animation. Once settled, a
+  // character no longer needs its own GPU layer, so we release the layer hints — this
+  // keeps the number of live compositing layers down to the few chars animating at once
+  // (instead of one permanent layer per character of the whole message).
+  const [settledCount, setSettledCount] = useState(0)
   const onCompleteRef = useRef(onComplete)
 
   useEffect(() => {
@@ -17,6 +26,7 @@ export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onC
 
   useEffect(() => {
     setRevealedCount(0)
+    setSettledCount(0)
     let current = 0
     const total = text.length
 
@@ -55,17 +65,28 @@ export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onC
               const absIdx = group.startIdx + ci
               const isLastInWord = ci === group.chars.length - 1
               const isVeryLast = wi === lastWordIdx && ci === lastCharIdx
+              const isRevealed = absIdx < revealedCount
+              const isSettled = absIdx < settledCount
+              // Only characters mid-animation carry the layer-promotion hints; unrevealed
+              // and settled ones stay un-promoted so the browser can flatten them.
+              const isAnimating = isRevealed && !isSettled
               return (
                 <span
                   key={ci}
-                  className={`inline-block ${absIdx < revealedCount ? 'animate-materialize' : 'opacity-0'}`}
+                  className={`inline-block ${isSettled ? 'opacity-100' : isRevealed ? 'animate-materialize' : 'opacity-0'}`}
                   style={{
-                    transform: 'translateZ(0)',
-                    willChange: 'filter, opacity',
-                    ...(absIdx < revealedCount && { animationDuration: `${animDuration}ms` }),
+                    ...(isAnimating && {
+                      transform: 'translateZ(0)',
+                      willChange: 'filter, opacity',
+                      animationDuration: `${animDuration}ms`,
+                    }),
+                    ...(isSettled && { textShadow: SETTLED_SHADOW }),
                     ...(isLastInWord && { letterSpacing: 0 }),
                   }}
-                  onAnimationEnd={isVeryLast ? () => onCompleteRef.current?.() : undefined}
+                  onAnimationEnd={() => {
+                    setSettledCount(c => Math.max(c, absIdx + 1))
+                    if (isVeryLast) onCompleteRef.current?.()
+                  }}
                 >
                   {char}
                 </span>
