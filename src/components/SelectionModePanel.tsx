@@ -247,9 +247,9 @@ function SendSheet({
       />
 
       {/* Sheet */}
-      <div className="relative w-full max-w-md max-h-[88vh] bg-jungle-900 border-t border-jungle-700 rounded-t-3xl p-6 pb-8 flex flex-col gap-6 animate-slide-up shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[88vh] bg-jungle-900 border-t border-jungle-700 rounded-t-3xl px-6 pt-3 pb-28 flex flex-col gap-6 animate-slide-up shadow-2xl">
         {/* Grab handle */}
-        <div className="mx-auto w-10 h-1 rounded-full bg-jungle-600 shrink-0" />
+        <div className="mx-auto w-10 h-1 rounded-full bg-jungle-600 shrink-0 -mb-4" />
 
         {/* Header */}
         <div className="flex items-center justify-between shrink-0">
@@ -259,15 +259,15 @@ function SendSheet({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-9 h-9 flex items-center justify-center rounded-full text-jungle-200 hover:text-jungle-50 hover:bg-jungle-800 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-jungle-600 bg-jungle-800 text-jungle-100 shadow-sm hover:bg-jungle-700 hover:border-jungle-400 hover:text-jungle-50 active:scale-95 transition-all"
           >
             ✕
           </button>
         </div>
 
         {/* Preview — scrolls if the message is long */}
-        <div className="flex-1 min-h-0 overflow-y-auto rounded-2xl border border-jungle-700 bg-jungle-950/60 px-6 py-8 flex items-center justify-center">
-          <p className="font-cinzel text-gold-300 text-2xl font-semibold break-words text-center w-full">
+        <div className="max-h-[32vh] overflow-y-auto rounded-2xl border border-jungle-700 bg-jungle-950/60 px-5 py-4 flex items-center justify-center">
+          <p className="font-cinzel text-gold-300 text-lg font-semibold break-words text-center w-full">
             {option.text}
           </p>
         </div>
@@ -333,6 +333,7 @@ function SlideToSend({
     draggingRef.current = true
     armedRef.current = false
     maxRef.current = maxOffset()
+    vibrate(10) // tick on grab
     e.currentTarget.setPointerCapture(e.pointerId)
   }
 
