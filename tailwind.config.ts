@@ -103,11 +103,11 @@ export default {
           to:   { opacity: '1', transform: 'translateY(0)' },
         },
         materialize: {
-          '0%':   { filter: 'blur(18px)', opacity: '0',    textShadow: 'none',                                                              transform: 'translateZ(0)' },
-          '40%':  { filter: 'blur(7px)',  opacity: '0.5',                                                                                    transform: 'translateZ(0)' },
-          '65%':  { filter: 'blur(3px)',  opacity: '0.75',                                                                                   transform: 'translateZ(0)' },
-          '80%':  { filter: 'blur(1.5px)',opacity: '0.88',                                                                                   transform: 'translateZ(0)' },
-          '90%':  { filter: 'blur(0.5px)',opacity: '0.95',                                                                                   transform: 'translateZ(0)' },
+          '0%':   { filter: 'blur(8px)',  opacity: '0',    textShadow: 'none',                                                              transform: 'translateZ(0)' },
+          '40%':  { filter: 'blur(3.5px)',opacity: '0.5',                                                                                    transform: 'translateZ(0)' },
+          '65%':  { filter: 'blur(1.5px)',opacity: '0.75',                                                                                   transform: 'translateZ(0)' },
+          '80%':  { filter: 'blur(0.8px)',opacity: '0.88',                                                                                   transform: 'translateZ(0)' },
+          '90%':  { filter: 'blur(0.3px)',opacity: '0.95',                                                                                   transform: 'translateZ(0)' },
           '100%': { filter: 'blur(0px)',  opacity: '1',    textShadow: '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)', transform: 'translateZ(0)' },
         },
         pulseGlowGold: {
