@@ -110,16 +110,16 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
   ]
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-1">
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 gap-3 p-[5px] rounded-2xl bg-canopy-900/50 border border-moss/15">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => switchMode(tab.id)}
-            className={`flex-1 py-3 px-3 text-sm font-cinzel rounded transition-colors ${
+            className={`py-3.5 rounded-xl text-center font-cinzel font-semibold text-[15px] tracking-[0.06em] transition-colors ${
               mode === tab.id
-                ? 'bg-jungle-600 text-jungle-50 border border-jungle-400'
-                : 'bg-jungle-900 text-jungle-200 border border-jungle-600 hover:border-jungle-400'
+                ? 'bg-gradient-to-b from-[#2e5738] to-[#204029] text-parchment shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_16px_-8px_rgba(0,0,0,0.6)]'
+                : 'text-sage-500 hover:text-sage-300'
             }`}
           >
             {tab.label}
@@ -127,25 +127,25 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
         ))}
       </div>
 
-      <p className="text-jungle-200 text-sm">
+      <p className="text-sage-400 text-sm leading-relaxed">
         {mode === 'manual' ? t('panel.helperManual') : t('panel.helperRandom')}
       </p>
 
       {/* ── Manual ── */}
       {mode === 'manual' && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {options.length === 0 && (
-            <p className="text-jungle-200 text-sm text-center py-4">{t('panel.emptyManual')}</p>
+            <p className="text-sage-400 text-sm text-center py-4">{t('panel.emptyManual')}</p>
           )}
           {options.map((opt) => (
             <button
               key={opt.id}
               onClick={() => setPreviewOption(opt)}
-              className="flex items-center gap-2 text-left px-3 py-3 rounded border border-jungle-700 hover:border-gold-500 bg-jungle-800 hover:bg-jungle-700 text-jungle-100 text-sm transition-all active:scale-95"
+              className="flex items-center gap-3.5 text-left pl-[18px] pr-4 py-4 rounded-[15px] bg-gradient-to-b from-frond-from/50 to-frond-to/50 border border-moss/20 hover:border-brass-400/40 transition-all active:scale-[0.99]"
             >
-              <span className="text-jungle-200 text-xs">{opt.position + 1}.</span>
-              <span className="flex-1">{opt.text}</span>
-              <span className="text-jungle-300 shrink-0" aria-hidden>›</span>
+              <span className="shrink-0 w-[26px] h-[26px] rounded-full bg-brass-400/[0.16] text-brass-400 font-cinzel font-semibold text-sm flex items-center justify-center">{opt.position + 1}</span>
+              <span className="flex-1 text-sage-100 text-[15px] leading-snug">{opt.text}</span>
+              <span className="text-sage-500 text-lg shrink-0" aria-hidden>›</span>
             </button>
           ))}
         </div>
@@ -166,20 +166,20 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
           )}
 
           <div className="flex items-center justify-between">
-            <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-wider">
+            <span className="text-[13px] font-semibold text-sage-200 uppercase tracking-[0.14em]">
               {t('panel.selected', { n: selectedIds.size, m: options.length })}
             </span>
             <button
               onClick={toggleAll}
-              className="text-xs font-cinzel text-jungle-200 hover:text-jungle-50 transition-colors uppercase tracking-wider px-2 py-1 rounded hover:bg-jungle-800"
+              className="text-[13px] text-brass-400 hover:text-brass-300 transition-colors tracking-[0.06em] px-2 py-1 rounded"
             >
               {selectedIds.size === options.length ? t('common.deselectAll') : t('common.selectAll')}
             </button>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-3">
             {options.length === 0 && (
-              <p className="text-jungle-200 text-sm text-center py-4">{t('panel.emptyRandom')}</p>
+              <p className="text-sage-400 text-sm text-center py-4">{t('panel.emptyRandom')}</p>
             )}
             {options.map((opt) => {
               const checked = selectedIds.has(opt.id)
@@ -187,19 +187,19 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
                 <button
                   key={opt.id}
                   onClick={() => toggleOption(opt.id)}
-                  className={`flex items-center gap-3 text-left px-3 py-3 rounded border transition-colors ${
+                  className={`flex items-center gap-3.5 text-left px-[18px] py-4 rounded-[15px] border transition-colors ${
                     checked
-                      ? 'border-jungle-500 bg-jungle-800 text-jungle-100'
-                      : 'border-jungle-700 bg-jungle-900/40 text-jungle-200'
+                      ? 'border-brass-400/28 bg-gradient-to-b from-[#2e5738]/50 to-[#204029]/50'
+                      : 'border-moss/15 bg-canopy-900/40'
                   }`}
                 >
-                  <span className={`w-5 h-5 flex-shrink-0 rounded-sm border text-sm flex items-center justify-center ${
-                    checked ? 'border-jungle-400 bg-jungle-600 text-jungle-100' : 'border-jungle-600'
+                  <span className={`w-[26px] h-[26px] flex-shrink-0 rounded-lg text-[15px] font-bold flex items-center justify-center ${
+                    checked ? 'bg-gradient-to-b from-brass-300 to-brass-500 text-canopy-800' : 'border border-sage-500/50'
                   }`}>
                     {checked && '✓'}
                   </span>
-                  <span className="text-jungle-200 text-xs mr-1">{opt.position + 1}.</span>
-                  <span className="text-sm">{opt.text}</span>
+                  <span className="shrink-0 font-cinzel font-semibold text-brass-400 text-sm">{opt.position + 1}</span>
+                  <span className={`flex-1 text-[15px] leading-snug ${checked ? 'text-sage-50' : 'text-sage-400'}`}>{opt.text}</span>
                 </button>
               )
             })}
@@ -242,40 +242,40 @@ function SendSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       {/* Backdrop — tap outside to dismiss */}
       <div
-        className="absolute inset-0 bg-black/60 animate-fade-in"
+        className="absolute inset-0 bg-[#060e09]/60 animate-fade-in"
         onClick={onClose}
       />
 
       {/* Sheet */}
-      <div className="relative w-full max-w-md max-h-[88vh] bg-jungle-900 border-t border-jungle-700 rounded-t-3xl px-6 pt-3 pb-28 flex flex-col gap-6 animate-slide-up shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[88vh] bg-gradient-to-b from-[#1b3624] to-[#12271a] border-t border-brass-400/28 rounded-t-[30px] px-6 pt-3 pb-28 flex flex-col gap-6 animate-slide-up shadow-[0_-24px_60px_-20px_rgba(0,0,0,0.7)]">
         {/* Grab handle */}
-        <div className="mx-auto w-10 h-1 rounded-full bg-jungle-600 shrink-0 -mb-4" />
+        <div className="mx-auto w-[46px] h-[5px] rounded-full bg-sage-300/40 shrink-0 -mb-4" />
 
         {/* Header */}
         <div className="flex items-center justify-between shrink-0">
-          <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
+          <span className="text-[15px] font-cinzel font-semibold text-sage-200 uppercase tracking-[0.14em]">
             {t('panel.sheetTitle')}
           </span>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-jungle-600 bg-jungle-800 text-jungle-100 shadow-sm hover:bg-jungle-700 hover:border-jungle-400 hover:text-jungle-50 active:scale-95 transition-all"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-sage-300/30 bg-sage-300/[0.14] text-sage-200 hover:bg-sage-300/20 hover:text-sage-50 active:scale-95 transition-all"
           >
             ✕
           </button>
         </div>
 
         {/* Preview — scrolls if the message is long */}
-        <div className="max-h-[32vh] overflow-y-auto rounded-2xl border border-jungle-700 bg-jungle-950/60 px-5 py-4 flex items-center justify-center">
-          <p className="font-cinzel text-gold-300 text-lg font-semibold break-words text-center w-full">
+        <div className="max-h-[32vh] overflow-y-auto rounded-[20px] border border-brass-400/25 bg-gradient-to-b from-frond-from/70 to-frond-to/70 px-6 py-8 flex items-center justify-center">
+          <p className="font-cinzel text-parchment text-[23px] font-semibold leading-relaxed break-words text-center w-full">
             {option.text}
           </p>
         </div>
 
         {/* Slide to send */}
-        <div className="flex flex-col items-center gap-2 shrink-0">
+        <div className="flex flex-col items-center gap-3 shrink-0">
           <SlideToSend onConfirm={onConfirm} />
-          <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
+          <span className="text-xs font-cinzel text-sage-500 uppercase tracking-[0.12em]">
             {t('panel.dragEnd')}
           </span>
         </div>
@@ -313,7 +313,7 @@ function SlideToSend({
   const [x, setX] = useState(0)
   const [confirmed, setConfirmed] = useState(false)
 
-  const KNOB = 56 // px
+  const KNOB = 58 // px
 
   useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current) }, [])
 
@@ -378,19 +378,19 @@ function SlideToSend({
   return (
     <div
       ref={trackRef}
-      className={`relative w-full h-16 rounded-full border border-jungle-600 bg-jungle-950/60 overflow-hidden select-none transition-opacity ${
+      className={`relative w-full h-[70px] rounded-full border border-brass-400/35 bg-canopy-900/60 overflow-hidden select-none transition-opacity ${
         disabled ? 'opacity-40' : ''
       }`}
     >
-      {/* Green fill trailing the knob */}
+      {/* Gold fill trailing the knob */}
       <div
-        className="absolute inset-y-0 left-0 rounded-full bg-gold-500/80"
+        className="absolute inset-y-0 left-0 rounded-full bg-brass-400/25"
         style={{ width: x + KNOB + 4, transition: draggingRef.current ? 'none' : 'width 200ms ease' }}
       />
 
-      {/* Prompt text — fades as you slide */}
+      {/* Prompt text — starts past the knob so the knob never covers it */}
       <span
-        className="absolute inset-0 flex items-center justify-center text-sm font-cinzel text-jungle-200 uppercase tracking-widest pointer-events-none"
+        className="absolute inset-y-0 left-[72px] right-5 flex items-center justify-center text-center leading-tight text-[15px] font-cinzel font-semibold text-sage-300 tracking-[0.08em] pointer-events-none"
         style={{ opacity: confirmed ? 0 : 1 - progress }}
       >
         {label ?? t('panel.slideSend')}
@@ -402,7 +402,7 @@ function SlideToSend({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className={`absolute top-1 left-1 w-14 h-14 rounded-full bg-gold-400 text-jungle-950 flex items-center justify-center text-2xl touch-none shadow-lg ${
+        className={`absolute top-1.5 left-1.5 w-[58px] h-[58px] rounded-full bg-gradient-to-b from-brass-300 to-brass-500 text-canopy-800 flex items-center justify-center text-2xl font-bold touch-none shadow-[0_8px_22px_-6px_rgba(230,182,79,0.7),inset_0_1px_0_rgba(255,255,255,0.5)] ${
           disabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
         }`}
         style={{ transform: `translateX(${x}px)`, transition: draggingRef.current ? 'none' : 'transform 200ms ease' }}
@@ -417,14 +417,14 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
   const { t } = useI18n()
   return (
     <div className="flex flex-col gap-2 animate-slide-up">
-      <div className={`relative rounded-lg border overflow-hidden p-4 text-center transition-colors duration-700 ${
+      <div className={`relative rounded-[15px] border overflow-hidden p-5 text-center transition-colors duration-700 ${
         phase === 'revealed'
-          ? 'border-jungle-500 bg-jungle-950/60'
-          : 'border-jungle-800 bg-jungle-950/40'
+          ? 'border-brass-400/40 bg-canopy-900/60'
+          : 'border-moss/20 bg-canopy-900/40'
       }`}>
         {/* Blurred text — clears on reveal */}
         <p
-          className="font-cinzel uppercase tracking-widest text-gold-300 text-base transition-all duration-[2000ms] ease-out"
+          className="font-cinzel uppercase tracking-[0.16em] text-brass-400 text-base transition-all duration-[2000ms] ease-out"
           style={{
             filter: phase === 'suspense' ? 'blur(10px)' : 'blur(0px)',
             opacity: phase === 'suspense' ? 0.25 : 1,
@@ -435,7 +435,7 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
 
         {/* Suspense label — fades out when revealing */}
         <p
-          className="text-xs font-cinzel text-jungle-200 mt-2 uppercase tracking-widest transition-opacity duration-500"
+          className="text-xs font-cinzel text-sage-400 mt-2 uppercase tracking-[0.16em] transition-opacity duration-500"
           style={{ opacity: phase === 'suspense' ? 1 : 0 }}
         >
           {t('panel.revealSuspense')}
@@ -443,7 +443,7 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
       </div>
 
       {phase === 'revealed' && (
-        <p className="text-xs text-jungle-200 text-center font-cinzel animate-fade-in">
+        <p className="text-xs text-sage-400 text-center font-cinzel animate-fade-in">
           {t('panel.revealDone')}
         </p>
       )}
