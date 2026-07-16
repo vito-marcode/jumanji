@@ -7,6 +7,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
 import { TutorialOverlay, TutorialStep } from '../components/TutorialOverlay'
 import { useTutorial } from '../hooks/useTutorial'
+import { consumeColdStart, getLastSession, isStandalonePWA, peekColdStart } from '../lib/lastSession'
 
 const LANDING_STEPS: TutorialStep[] = [
   {
@@ -48,6 +49,23 @@ export default function Landing() {
   const [view, setView] = useState<'home' | 'join'>('home')
   const [recentSessions, setRecentSessions] = useState<StoredSession[]>([])
   const [pendingRemoveCode, setPendingRemoveCode] = useState<string | null>(null)
+  // When launched as an installed PWA, resume the last session this device used
+  // instead of showing the Landing page. Only on a genuine cold start — not when
+  // the user navigates back here via "Leave".
+  const [resuming, setResuming] = useState(
+    () => peekColdStart() && isStandalonePWA() && !!getLastSession(),
+  )
+
+  useEffect(() => {
+    const cold = consumeColdStart()
+    if (!cold || !isStandalonePWA()) {
+      setResuming(false)
+      return
+    }
+    const last = getLastSession()
+    if (last) navigate(`/${last.role}/${last.code}`, { replace: true })
+    else setResuming(false)
+  }, [navigate])
 
   useEffect(() => {
     try {
@@ -71,6 +89,15 @@ export default function Landing() {
     const updated = recentSessions.filter(s => s.code !== code)
     setRecentSessions(updated)
     localStorage.setItem('jumanji_sessions', JSON.stringify(updated))
+  }
+
+  // Show a spinner (not the Landing UI) while resuming into the installed session.
+  if (resuming) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-jungle-950">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   return (
