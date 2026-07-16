@@ -11,6 +11,7 @@ import { useTutorial } from '../hooks/useTutorial'
 import { useSessionPresence } from '../hooks/useSessionPresence'
 import { SignalIcon } from '../components/SignalIcon'
 import { ConnectionBanner } from '../components/ConnectionBanner'
+import { consumeColdStart, saveLastSession } from '../lib/lastSession'
 
 const SPEED_PRESETS = [
   { label: 'Mystic',  charDelay: 220, animDuration: 10000 },
@@ -139,6 +140,16 @@ export default function MainDisplay() {
   circleScaleRef.current = circleSizePercent / 100
   circleSizePercentRef.current = circleSizePercent
   const effectiveCircleSize = circleSize * (circleSizePercent / 100)
+
+  // Remember this device's last session so the installed PWA reopens it.
+  // consumeColdStart() marks the launch as handled (covers iOS, which opens the
+  // session URL directly without passing through the Landing redirect).
+  useEffect(() => {
+    consumeColdStart()
+  }, [])
+  useEffect(() => {
+    if (sessionCode) saveLastSession('main', sessionCode)
+  }, [sessionCode])
 
   // Save session to localStorage when loaded
   useEffect(() => {

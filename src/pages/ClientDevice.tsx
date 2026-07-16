@@ -14,6 +14,7 @@ import { useTutorial } from '../hooks/useTutorial'
 import { useSessionPresence } from '../hooks/useSessionPresence'
 import { SignalIcon } from '../components/SignalIcon'
 import { ConnectionBanner } from '../components/ConnectionBanner'
+import { consumeColdStart, saveLastSession } from '../lib/lastSession'
 import type { Collection } from '../types'
 
 const CLIENT_STEPS: TutorialStep[] = [
@@ -54,6 +55,14 @@ export default function ClientDevice() {
     useCollections(sessionId)
   const { sendMessage, clearDisplay } = useDisplayMessages()
   const connectionQuality = useSessionPresence()
+
+  // Remember this device's last session so the installed PWA reopens it.
+  useEffect(() => {
+    consumeColdStart()
+  }, [])
+  useEffect(() => {
+    if (sessionCode) saveLastSession('client', sessionCode)
+  }, [sessionCode])
 
   // Keep selectedCollection in sync when collections update
   useEffect(() => {
