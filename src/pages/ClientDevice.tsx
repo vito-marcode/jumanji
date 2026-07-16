@@ -135,7 +135,10 @@ export default function ClientDevice() {
               onClick={() => setSelectedCollection(null)}
               className="self-start flex items-center gap-2 text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
             >
-              ← {t('client.back')}
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              {t('client.back')}
             </button>
             <div>
               <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">{t('client.activeCollection')}</p>

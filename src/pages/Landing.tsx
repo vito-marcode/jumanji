@@ -141,7 +141,7 @@ export default function Landing() {
                   <Spinner size="sm" /> Creating…
                 </span>
               ) : (
-                '🎮 Be the Main'
+                '📺 Be the Main'
               )}
             </Button>
             <Button
@@ -150,7 +150,7 @@ export default function Landing() {
               className="w-full text-center"
               onClick={() => setView('join')}
             >
-              🌿 Join Session
+              📱 Join Session
             </Button>
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
@@ -163,22 +163,33 @@ export default function Landing() {
                 {recentSessions.map(s => (
                   <div
                     key={s.code}
-                    className="flex items-center justify-between bg-jungle-900/60 border border-jungle-800 rounded px-3 py-2 group"
+                    className="flex items-center justify-between gap-2 bg-jungle-900/60 border border-jungle-800 rounded px-3 py-2 group"
                   >
-                    <button
-                      className="flex items-center gap-3 flex-1 text-left"
-                      onClick={() => navigate(`/main/${s.code}`)}
-                    >
+                    <div className="flex flex-col">
                       <span className="font-cinzel text-gold-400 tracking-widest text-sm">{s.code}</span>
                       <span className="text-jungle-200 text-xs font-cinzel">{timeAgo(s.createdAt)}</span>
-                    </button>
-                    <button
-                      onClick={() => setPendingRemoveCode(s.code)}
-                      className="text-jungle-200 hover:text-jungle-50 text-xs ml-2 transition-colors opacity-0 group-hover:opacity-100"
-                      aria-label="Remove"
-                    >
-                      ✕
-                    </button>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => navigate(`/main/${s.code}`)}
+                        className="text-jungle-100 hover:text-gold-300 text-xs font-cinzel uppercase tracking-widest px-2 py-1 rounded border border-jungle-800 hover:border-gold-700 transition-colors"
+                      >
+                        📺 Main
+                      </button>
+                      <button
+                        onClick={() => navigate(`/client/${s.code}`)}
+                        className="text-jungle-100 hover:text-gold-300 text-xs font-cinzel uppercase tracking-widest px-2 py-1 rounded border border-jungle-800 hover:border-gold-700 transition-colors"
+                      >
+                        📱 Remote
+                      </button>
+                      <button
+                        onClick={() => setPendingRemoveCode(s.code)}
+                        className="text-jungle-200 hover:text-jungle-50 text-xs ml-0.5 transition-colors opacity-0 group-hover:opacity-100"
+                        aria-label="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
