@@ -7,9 +7,10 @@ interface TypewriterTextProps {
   onComplete?: () => void
 }
 
-// Final materialize keyframe glow — applied statically to settled characters so we can
-// drop their compositing layer (will-change/translateZ) without changing how they look.
-const SETTLED_SHADOW = '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)'
+// The gold glow. It is a *static* text-shadow (never animated) so the browser rasterizes
+// each glyph once and only composites it — the materialize animation touches only opacity
+// and transform. Applied to every revealed char, it fades in with the letter via opacity.
+const GLOW = '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)'
 
 export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onComplete }: TypewriterTextProps) {
   const [revealedCount, setRevealedCount] = useState(0)
@@ -75,12 +76,14 @@ export function TypewriterText({ text, charDelay = 120, animDuration = 6000, onC
                   key={ci}
                   className={`inline-block ${isSettled ? 'opacity-100' : isRevealed ? 'animate-materialize' : 'opacity-0'}`}
                   style={{
+                    // Glow is present as soon as the char is revealed (fades in via opacity).
+                    ...(isRevealed && { textShadow: GLOW }),
+                    // Promote to a compositing layer only while animating; the keyframe drives
+                    // the transform, so we just hint transform+opacity here and release it after.
                     ...(isAnimating && {
-                      transform: 'translateZ(0)',
-                      willChange: 'filter, opacity',
+                      willChange: 'transform, opacity',
                       animationDuration: `${animDuration}ms`,
                     }),
-                    ...(isSettled && { textShadow: SETTLED_SHADOW }),
                     ...(isLastInWord && { letterSpacing: 0 }),
                   }}
                   onAnimationEnd={() => {

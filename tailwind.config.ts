@@ -102,13 +102,12 @@ export default {
           from: { opacity: '0', transform: 'translateY(12px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
         },
+        // Compositor-only reveal: animates ONLY opacity + transform (a "focus-in" from a
+        // slightly larger scale) so old GPUs never re-rasterize. The gold glow is a static
+        // text-shadow set in TypewriterText, not animated here — it fades in via opacity.
         materialize: {
-          '0%':   { filter: 'blur(8px)',  opacity: '0',    textShadow: 'none',                                                              transform: 'translateZ(0)' },
-          '40%':  { filter: 'blur(3.5px)',opacity: '0.5',                                                                                    transform: 'translateZ(0)' },
-          '65%':  { filter: 'blur(1.5px)',opacity: '0.75',                                                                                   transform: 'translateZ(0)' },
-          '80%':  { filter: 'blur(0.8px)',opacity: '0.88',                                                                                   transform: 'translateZ(0)' },
-          '90%':  { filter: 'blur(0.3px)',opacity: '0.95',                                                                                   transform: 'translateZ(0)' },
-          '100%': { filter: 'blur(0px)',  opacity: '1',    textShadow: '0 0 10px rgba(249,204,106,0.7), 0 0 30px rgba(249,204,106,0.35)', transform: 'translateZ(0)' },
+          '0%':   { opacity: '0', transform: 'translateZ(0) scale(1.25)' },
+          '100%': { opacity: '1', transform: 'translateZ(0) scale(1)' },
         },
         pulseGlowGold: {
           '0%, 100%': { textShadow: '0 0 10px rgba(249,204,106,0.5), 0 0 25px rgba(249,204,106,0.25)' },
