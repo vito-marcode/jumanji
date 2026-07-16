@@ -92,7 +92,7 @@ export default function ClientDevice() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-canopy-700 to-canopy-800 text-sage-50 font-sans flex flex-col">
+    <div className="h-[100dvh] overflow-hidden bg-gradient-to-b from-canopy-700 to-canopy-800 text-sage-50 font-sans flex flex-col">
       <ConnectionBanner />
       {/* Header */}
       <header className="relative flex items-start justify-between px-5 py-4 border-b border-brass-400/15 bg-canopy-900/50">
@@ -124,7 +124,7 @@ export default function ClientDevice() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-[22px] py-6 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-[22px] py-6 flex flex-col gap-6">
         {selectedCollection ? (
           /* ── Collection page ── */
           <div className="animate-slide-up flex flex-col gap-5">
@@ -211,8 +211,8 @@ export default function ClientDevice() {
         )}
       </div>
 
-      {/* Clear screen footer */}
-      <div className="sticky bottom-0 z-10 px-[22px] py-4 bg-canopy-900/50 backdrop-blur-sm border-t border-brass-400/15">
+      {/* Clear screen footer — fixed flex child; root doesn't scroll, so it's immune to overscroll bounce */}
+      <div className="shrink-0 z-10 px-[22px] pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-canopy-900/50 backdrop-blur-sm border-t border-brass-400/15">
         <button
           onClick={() => clearDisplay()}
           className="w-full py-4 rounded-2xl border border-brass-400/45 bg-gradient-to-b from-brass-400/[0.12] to-brass-400/[0.04] hover:from-brass-400/20 hover:to-brass-400/[0.08] text-brass-400 text-base font-cinzel font-semibold tracking-[0.08em] transition-colors active:scale-[0.98]"
