@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { useI18n } from '../i18n'
 import type { Collection, Option } from '../types'
 
 type Mode = 'manual' | 'random'
@@ -14,6 +15,7 @@ interface SelectionModePanelProps {
 const REVEAL_DELAY_MS = 3000
 
 export function SelectionModePanel({ collection, onSend }: SelectionModePanelProps) {
+  const { t } = useI18n()
   const [mode, setMode] = useState<Mode>('manual')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set((collection.options ?? []).map(o => o.id))
@@ -103,8 +105,8 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
   }
 
   const tabs: { id: Mode; label: string }[] = [
-    { id: 'manual',  label: 'Manual' },
-    { id: 'random', label: 'Random' },
+    { id: 'manual',  label: t('panel.manual') },
+    { id: 'random', label: t('panel.random') },
   ]
 
   return (
@@ -126,16 +128,14 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
       </div>
 
       <p className="text-jungle-200 text-sm">
-        {mode === 'manual'
-          ? 'Tap an option to send it to the main screen.'
-          : 'Select options below, then slide to roll — a random pick will appear on the main screen.'}
+        {mode === 'manual' ? t('panel.helperManual') : t('panel.helperRandom')}
       </p>
 
       {/* ── Manual ── */}
       {mode === 'manual' && (
         <div className="flex flex-col gap-2">
           {options.length === 0 && (
-            <p className="text-jungle-200 text-sm text-center py-4">No options yet. Add some above.</p>
+            <p className="text-jungle-200 text-sm text-center py-4">{t('panel.emptyManual')}</p>
           )}
           {options.map((opt) => (
             <button
@@ -157,7 +157,7 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
           <SlideToSend
             onConfirm={rollSegment}
             disabled={selectedIds.size === 0 || revealPhase === 'suspense'}
-            label="🎲 Slide to roll & send →"
+            label={t('panel.slideRoll')}
             resetOnConfirm
           />
 
@@ -167,19 +167,19 @@ export function SelectionModePanel({ collection, onSend }: SelectionModePanelPro
 
           <div className="flex items-center justify-between">
             <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-wider">
-              {selectedIds.size}/{options.length} selected
+              {t('panel.selected', { n: selectedIds.size, m: options.length })}
             </span>
             <button
               onClick={toggleAll}
               className="text-xs font-cinzel text-jungle-200 hover:text-jungle-50 transition-colors uppercase tracking-wider px-2 py-1 rounded hover:bg-jungle-800"
             >
-              {selectedIds.size === options.length ? 'Deselect all' : 'Select all'}
+              {selectedIds.size === options.length ? t('common.deselectAll') : t('common.selectAll')}
             </button>
           </div>
 
           <div className="flex flex-col gap-1.5">
             {options.length === 0 && (
-              <p className="text-jungle-200 text-sm text-center py-4">No options yet.</p>
+              <p className="text-jungle-200 text-sm text-center py-4">{t('panel.emptyRandom')}</p>
             )}
             {options.map((opt) => {
               const checked = selectedIds.has(opt.id)
@@ -228,6 +228,7 @@ function SendSheet({
   onConfirm: () => Promise<void> | void
   onClose: () => void
 }) {
+  const { t } = useI18n()
   // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -253,7 +254,7 @@ function SendSheet({
         {/* Header */}
         <div className="flex items-center justify-between shrink-0">
           <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
-            Send this message
+            {t('panel.sheetTitle')}
           </span>
           <button
             onClick={onClose}
@@ -275,7 +276,7 @@ function SendSheet({
         <div className="flex flex-col items-center gap-2 shrink-0">
           <SlideToSend onConfirm={onConfirm} />
           <span className="text-xs font-cinzel text-jungle-200 uppercase tracking-widest">
-            Drag to the end
+            {t('panel.dragEnd')}
           </span>
         </div>
       </div>
@@ -294,7 +295,7 @@ function vibrate(pattern: number | number[]) {
 function SlideToSend({
   onConfirm,
   disabled = false,
-  label = 'Slide to send →',
+  label,
   resetOnConfirm = false,
 }: {
   onConfirm: () => Promise<void> | void
@@ -302,6 +303,7 @@ function SlideToSend({
   label?: string
   resetOnConfirm?: boolean
 }) {
+  const { t } = useI18n()
   const trackRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
   const maxRef = useRef(0)
@@ -390,7 +392,7 @@ function SlideToSend({
         className="absolute inset-0 flex items-center justify-center text-sm font-cinzel text-jungle-200 uppercase tracking-widest pointer-events-none"
         style={{ opacity: confirmed ? 0 : 1 - progress }}
       >
-        {label}
+        {label ?? t('panel.slideSend')}
       </span>
 
       {/* Knob */}
@@ -411,6 +413,7 @@ function SlideToSend({
 }
 
 function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase }) {
+  const { t } = useI18n()
   return (
     <div className="flex flex-col gap-2 animate-slide-up">
       <div className={`relative rounded-lg border overflow-hidden p-4 text-center transition-colors duration-700 ${
@@ -434,13 +437,13 @@ function RandomReveal({ option, phase }: { option: Option; phase: RevealPhase })
           className="text-xs font-cinzel text-jungle-200 mt-2 uppercase tracking-widest transition-opacity duration-500"
           style={{ opacity: phase === 'suspense' ? 1 : 0 }}
         >
-          appearing on main screen…
+          {t('panel.revealSuspense')}
         </p>
       </div>
 
       {phase === 'revealed' && (
         <p className="text-xs text-jungle-200 text-center font-cinzel animate-fade-in">
-          ✓ sent to main screen
+          {t('panel.revealDone')}
         </p>
       )}
     </div>

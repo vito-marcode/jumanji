@@ -23,7 +23,7 @@ const LANDING_STEPS: TutorialStep[] = [
   {
     icon: '🔗',
     title: 'Join a Session',
-    description: 'Got a code? Enter it here to join as a client. You\'ll be able to send options to the main display.',
+    description: 'Got a code? Enter it here to join as a client. You\'ll be able to send messages to the main display.',
   },
 ]
 

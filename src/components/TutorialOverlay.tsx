@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Button } from './ui/Button'
+import { useI18n } from '../i18n'
 
 export interface TutorialStep {
   icon?: string
@@ -26,6 +27,7 @@ export function TutorialOverlay({
   onPrev,
   onSkip,
 }: TutorialOverlayProps) {
+  const { t } = useI18n()
   const step = steps[currentStep]
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function TutorialOverlay({
         <div className="flex items-center justify-between gap-2">
           {/* Skip */}
           <Button variant="ghost" size="sm" onClick={onSkip} className="text-jungle-400">
-            Skip
+            {t('tut.skip')}
           </Button>
 
           {/* Step dots */}
@@ -91,7 +93,7 @@ export function TutorialOverlay({
               size="sm"
               onClick={onNext}
             >
-              {isLastStep ? 'Finish' : 'Next →'}
+              {isLastStep ? t('tut.finish') : t('tut.next')}
             </Button>
           </div>
         </div>

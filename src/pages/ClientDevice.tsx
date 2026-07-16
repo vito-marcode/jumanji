@@ -14,35 +14,30 @@ import { useTutorial } from '../hooks/useTutorial'
 import { useSessionPresence } from '../hooks/useSessionPresence'
 import { SignalIcon } from '../components/SignalIcon'
 import { ConnectionBanner } from '../components/ConnectionBanner'
+import { HeaderMenu } from '../components/HeaderMenu'
 import { consumeColdStart, saveLastSession } from '../lib/lastSession'
+import { useI18n } from '../i18n'
 import type { Collection } from '../types'
 
-const CLIENT_STEPS: TutorialStep[] = [
-  {
-    icon: '📚',
-    title: 'Your Collections',
-    description: 'Collections are groups of options. Create as many as you need — topics, names, challenges, anything.',
-  },
-  {
-    icon: '✏️',
-    title: 'Add Options',
-    description: 'Expand a collection to add, edit, or delete options. Each option can be sent to the main display.',
-  },
-  {
-    icon: '👆',
-    title: 'Manual Mode',
-    description: 'Tap any option to send it instantly to the main display. Great for direct, deliberate choices.',
-  },
-  {
-    icon: '🎲',
-    title: 'Random Mode',
-    description: 'Switch to Random, select options with checkboxes, then roll! A random pick is revealed with suspense.',
-  },
-]
+// Step icons + translation keys; the copy itself comes from i18n.
+const CLIENT_STEP_KEYS = [
+  { icon: '📚', key: 's1' },
+  { icon: '💬', key: 's2' },
+  { icon: '👆', key: 's3' },
+  { icon: '🎲', key: 's4' },
+  { icon: '✏️', key: 's5' },
+] as const
 
 export default function ClientDevice() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { sessionCode, sessionId, loadingSession } = useTransport()
+
+  const clientSteps: TutorialStep[] = CLIENT_STEP_KEYS.map((s) => ({
+    icon: s.icon,
+    title: t(`tut.${s.key}.title`),
+    description: t(`tut.${s.key}.desc`),
+  }))
 
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
   const [editMode, setEditMode] = useState(false)
@@ -50,7 +45,7 @@ export default function ClientDevice() {
   const [newCollectionName, setNewCollectionName] = useState('')
   const [creating, setCreating] = useState(false)
   const [sendFeedback, setSendFeedback] = useState(false)
-  const tutorial = useTutorial('client', CLIENT_STEPS.length)
+  const tutorial = useTutorial('client', CLIENT_STEP_KEYS.length)
 
   const { collections, loading: collectionsLoading, createCollection, deleteCollection, addOption, deleteOption, updateOption } =
     useCollections(sessionId)
@@ -104,7 +99,7 @@ export default function ClientDevice() {
         <div>
           <h1 className="font-cinzel text-gold-300 font-bold text-base">JUMANJI</h1>
           <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-wider">
-            Session: {sessionCode}
+            {t('header.session')} {sessionCode}
           </p>
         </div>
         {/* Signal icon — centered */}
@@ -112,26 +107,23 @@ export default function ClientDevice() {
           <SignalIcon quality={connectionQuality} />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={tutorial.restart}
-            className="text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
+            aria-label={t('common.help')}
+            title={t('common.help')}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-jungle-700 text-jungle-200 hover:text-jungle-50 hover:bg-jungle-800 text-sm font-cinzel transition-colors"
           >
-            ? Help
+            ?
           </button>
-          <button
-            onClick={() => navigate('/')}
-            className="text-jungle-200 hover:text-jungle-50 text-sm font-cinzel px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
-          >
-            Leave
-          </button>
+          <HeaderMenu onLeave={() => navigate('/')} />
         </div>
       </header>
 
       {/* Sent feedback toast */}
       {sendFeedback && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-jungle-700 border border-jungle-400 border-glow-green rounded-lg px-4 py-2 font-cinzel text-jungle-100 text-sm animate-slide-up shadow-glow_green">
-          ✓ Sent to the Main Screen
+          {t('toast.sent')}
         </div>
       )}
 
@@ -143,10 +135,10 @@ export default function ClientDevice() {
               onClick={() => setSelectedCollection(null)}
               className="self-start flex items-center gap-2 text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
             >
-              ← Back to collections
+              ← {t('client.back')}
             </button>
             <div>
-              <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">Active Collection</p>
+              <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">{t('client.activeCollection')}</p>
               <span className="text-gold-300 font-cinzel text-xl font-semibold">{selectedCollection.name}</span>
             </div>
             <SelectionModePanel collection={selectedCollection} onSend={handleSend} />
@@ -157,12 +149,12 @@ export default function ClientDevice() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <h2 className="font-cinzel text-jungle-100 text-sm uppercase tracking-widest">
-                  Your Collections
+                  {t('list.title')}
                 </h2>
                 <div className="flex items-center gap-2">
                   {editMode && (
                     <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
-                      + New
+                      {t('common.newBtn')}
                     </Button>
                   )}
                   <Button
@@ -170,14 +162,12 @@ export default function ClientDevice() {
                     size="sm"
                     onClick={() => setEditMode((v) => !v)}
                   >
-                    {editMode ? '✓ Done' : '✎ Edit'}
+                    {editMode ? t('common.doneBtn') : t('common.editBtn')}
                   </Button>
                 </div>
               </div>
               <p className="text-jungle-200 text-sm">
-                {editMode
-                  ? 'Edit mode: add or remove collections and their options.'
-                  : 'Tap a collection to open it, then pick an option to send.'}
+                {editMode ? t('list.helperEdit') : t('list.helperNormal')}
               </p>
             </div>
 
@@ -189,7 +179,7 @@ export default function ClientDevice() {
 
             {!collectionsLoading && collections.length === 0 && (
               <p className="text-jungle-200 text-sm text-center py-6 font-cinzel">
-                No collections yet. Create one to begin.
+                {t('list.empty')}
               </p>
             )}
 
@@ -221,17 +211,17 @@ export default function ClientDevice() {
           onClick={() => clearDisplay()}
           className="w-full py-3 rounded border border-gold-800 bg-gold-950/40 hover:bg-gold-900/20 hover:border-gold-600 text-gold-400 hover:text-gold-300 text-sm font-cinzel uppercase tracking-widest transition-colors active:scale-95"
         >
-          🧹 Clear main screen
+          🧹 {t('footer.clear')}
         </button>
       </div>
 
       {/* New Collection Modal */}
       {showNewCollectionModal && (
-        <Modal title="New Collection" onClose={() => { setShowNewCollectionModal(false); setNewCollectionName('') }}>
+        <Modal title={t('modalNew.title')} onClose={() => { setShowNewCollectionModal(false); setNewCollectionName('') }}>
           <div className="flex flex-col gap-4">
             <Input
-              label="Collection Name"
-              placeholder="e.g. Dangers, Fate Cards, Items…"
+              label={t('modalNew.nameLabel')}
+              placeholder={t('modalNew.namePlaceholder')}
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}
               autoFocus
@@ -245,7 +235,7 @@ export default function ClientDevice() {
                 disabled={creating || !newCollectionName.trim()}
                 className="flex-1"
               >
-                {creating ? 'Creating…' : 'Create'}
+                {creating ? t('common.creating') : t('common.create')}
               </Button>
               <Button
                 variant="ghost"
@@ -253,7 +243,7 @@ export default function ClientDevice() {
                 onClick={() => { setShowNewCollectionModal(false); setNewCollectionName('') }}
                 className="flex-1"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -262,7 +252,7 @@ export default function ClientDevice() {
 
       {tutorial.isVisible && (
         <TutorialOverlay
-          steps={CLIENT_STEPS}
+          steps={clientSteps}
           currentStep={tutorial.currentStep}
           isFirstStep={tutorial.isFirstStep}
           isLastStep={tutorial.isLastStep}

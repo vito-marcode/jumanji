@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
-import { Input } from './ui/Input'
 import { ConfirmModal } from './ui/ConfirmModal'
+import { useI18n } from '../i18n'
 import type { Collection } from '../types'
 
 interface CollectionCardProps {
@@ -26,6 +26,7 @@ export function CollectionCard({
   onDeleteOption,
   onUpdateOption,
 }: CollectionCardProps) {
+  const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const [newOptionText, setNewOptionText] = useState('')
   const [adding, setAdding] = useState(false)
@@ -84,7 +85,9 @@ export function CollectionCard({
               <span className="text-jungle-200 text-sm shrink-0 w-4 text-center">{expanded ? '▲' : '▼'}</span>
             )}
             <span className="font-cinzel text-jungle-100 font-semibold">{collection.name}</span>
-            <span className="text-xs text-jungle-200">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-jungle-200">
+              {t(optionCount === 1 ? 'card.messagesOne' : 'card.messagesOther', { n: optionCount })}
+            </span>
           </button>
 
           {editMode && (
@@ -119,9 +122,9 @@ export function CollectionCard({
                     />
                     <div className="flex gap-2">
                       <Button variant="primary" size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>
-                        {saving ? '…' : 'Save'}
+                        {saving ? '…' : t('common.save')}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancel</Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit}>{t('common.cancel')}</Button>
                     </div>
                   </div>
                 ) : (
@@ -130,14 +133,14 @@ export function CollectionCard({
                     <button
                       onClick={() => startEdit(opt.id, opt.text)}
                       className="text-jungle-200 hover:text-jungle-50 text-sm shrink-0 px-2 py-1 rounded hover:bg-jungle-700 transition-colors"
-                      title="Edit option"
+                      title={t('card.editMessage')}
                     >
                       ✎
                     </button>
                     <button
                       onClick={() => setPendingDeleteOptionId(opt.id)}
                       className="text-red-400 hover:text-red-300 text-sm shrink-0 px-2 py-1 rounded hover:bg-red-900/30 transition-colors"
-                      title="Delete option"
+                      title={t('card.deleteMessage')}
                     >
                       ✕
                     </button>
@@ -151,7 +154,7 @@ export function CollectionCard({
                 <textarea
                   value={newOptionText}
                   onChange={(e) => setNewOptionText(e.target.value)}
-                  placeholder="Enter option text..."
+                  placeholder={t('card.messagePlaceholder')}
                   rows={2}
                   className="bg-jungle-800 border border-jungle-600 focus:border-jungle-300 focus:outline-none rounded px-3 py-2 text-jungle-50 placeholder-jungle-500 text-sm transition-colors resize-none"
                   onKeyDown={(e) => {
@@ -165,16 +168,16 @@ export function CollectionCard({
                 />
                 <div className="flex gap-2">
                   <Button variant="primary" size="sm" onClick={handleAddOption} disabled={adding || !newOptionText.trim()}>
-                    Add
+                    {t('common.add')}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => { setShowAddInput(false); setNewOptionText('') }}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </div>
             ) : (
               <Button variant="ghost" size="sm" onClick={() => setShowAddInput(true)} className="mt-1 w-full">
-                + Add Option
+                {t('card.addMessage')}
               </Button>
             )}
           </div>
@@ -183,9 +186,9 @@ export function CollectionCard({
 
       {confirmDeleteCollection && (
         <ConfirmModal
-          title="Delete collection?"
-          message={`"${collection.name}" and all its options will be permanently removed.`}
-          confirmLabel="Delete"
+          title={t('card.deleteCollectionTitle')}
+          message={t('card.deleteCollectionMsg', { name: collection.name })}
+          confirmLabel={t('common.delete')}
           onConfirm={() => { setConfirmDeleteCollection(false); onDelete() }}
           onCancel={() => setConfirmDeleteCollection(false)}
         />
@@ -193,9 +196,9 @@ export function CollectionCard({
 
       {pendingDeleteOptionId && pendingDeleteOption && (
         <ConfirmModal
-          title="Delete option?"
-          message={`"${pendingDeleteOption.text}" will be permanently removed.`}
-          confirmLabel="Delete"
+          title={t('card.deleteMessageTitle')}
+          message={t('card.deleteMessageMsg', { text: pendingDeleteOption.text })}
+          confirmLabel={t('common.delete')}
           onConfirm={() => { onDeleteOption(pendingDeleteOptionId); setPendingDeleteOptionId(null) }}
           onCancel={() => setPendingDeleteOptionId(null)}
         />

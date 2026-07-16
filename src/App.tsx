@@ -3,10 +3,12 @@ import Landing from './pages/Landing'
 import MainDisplay from './pages/MainDisplay'
 import ClientDevice from './pages/ClientDevice'
 import { TransportProvider } from './hooks/useTransport'
+import { I18nProvider } from './i18n'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
@@ -26,6 +28,7 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </I18nProvider>
   )
 }
