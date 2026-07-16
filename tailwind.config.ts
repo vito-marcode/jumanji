@@ -9,6 +9,7 @@ export default {
         cinzel_deco: ['"Cinzel Decorative"', 'serif'],
         forum: ['"Forum"', 'serif'],
         grobold: ['"Grobold"', 'sans-serif'],
+        sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'],
         mono: ['"Courier New"', 'Courier', 'monospace'],
       },
       colors: {
@@ -41,6 +42,39 @@ export default {
           green: '#00ff41',
           gold: '#ffd700',
         },
+
+        // ── Client restyle palette (mockup: lightened jungle theme) ──
+        // Additive only — MainDisplay/Landing keep the original jungle/gold.
+        // Softer "brass" gold for client accents (and the slide-knob gradient).
+        brass: {
+          300: '#f2c85f',
+          400: '#e6b64f',
+          500: '#d29a2e',
+        },
+        // Warm cream for client headings / collection titles.
+        parchment: '#f4ecd7',
+        // Muted sage greens for client body text & secondary UI.
+        sage: {
+          50:  '#f0f6ec',
+          100: '#dcecd4',
+          200: '#c9e0c2',
+          300: '#9dbf9a',
+          400: '#8fb08c',
+          500: '#7fa07f',
+        },
+        // Deep surfaces for the lightened client screen background.
+        canopy: {
+          700: '#15291b',
+          800: '#0f2015',
+          900: '#09140d',
+        },
+        // Card surface gradient stops + tender border/accents.
+        frond: {
+          from: '#23402c',
+          to:   '#182e1f',
+        },
+        moss: '#94c994',
+        signal: '#5fbf6a',
       },
       boxShadow: {
         glow_green: '0 0 8px 2px rgba(0,255,65,0.5)',

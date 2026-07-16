@@ -29,7 +29,7 @@ export function HeaderMenu({ onLeave }: { onLeave: () => void }) {
   }, [open])
 
   const itemClass =
-    'flex w-full items-center gap-2 px-3 py-2 text-xs font-cinzel text-left text-jungle-200 hover:bg-jungle-800 transition-colors'
+    'flex w-full items-center gap-2 px-3 py-2 text-xs font-cinzel text-left text-sage-300 hover:bg-white/5 transition-colors'
 
   return (
     <div ref={ref} className="relative">
@@ -38,18 +38,20 @@ export function HeaderMenu({ onLeave }: { onLeave: () => void }) {
         aria-label="Menu"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-9 h-9 flex items-center justify-center rounded border border-jungle-700 text-jungle-200 hover:text-jungle-50 hover:bg-jungle-800 transition-colors"
+        className="w-9 h-9 flex flex-col items-center justify-center gap-[3px] rounded-[11px] bg-brass-400/[0.12] border border-brass-400/30 hover:bg-brass-400/20 transition-colors"
       >
-        <span className="text-lg leading-none">☰</span>
+        <span className="w-4 h-0.5 rounded-full bg-brass-400" />
+        <span className="w-4 h-0.5 rounded-full bg-brass-400" />
+        <span className="w-4 h-0.5 rounded-full bg-brass-400" />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-1 min-w-[11rem] rounded border border-jungle-700 bg-jungle-900 shadow-lg overflow-hidden z-50 animate-fade-in"
+          className="absolute right-0 mt-1.5 min-w-[11rem] rounded-xl border border-moss/20 bg-canopy-900 shadow-lg overflow-hidden z-50 animate-fade-in"
         >
           {/* Language */}
-          <div className="px-3 pt-2 pb-1 text-[0.65rem] font-cinzel uppercase tracking-widest text-jungle-400">
+          <div className="px-3 pt-2 pb-1 text-[0.65rem] font-cinzel uppercase tracking-widest text-sage-500">
             {t('common.language')}
           </div>
           {LANGS.map((l) => (
@@ -59,15 +61,15 @@ export function HeaderMenu({ onLeave }: { onLeave: () => void }) {
               aria-checked={lang === l.code}
               onClick={() => setLang(l.code)}
               className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-xs font-cinzel text-left transition-colors ${
-                lang === l.code ? 'bg-jungle-700 text-jungle-50' : 'text-jungle-200 hover:bg-jungle-800'
+                lang === l.code ? 'bg-frond-from/60 text-sage-50' : 'text-sage-300 hover:bg-white/5'
               }`}
             >
               <span>{l.label}</span>
-              <span className="uppercase tracking-wider text-jungle-400">{lang === l.code ? '✓' : l.code}</span>
+              <span className="uppercase tracking-wider text-brass-400">{lang === l.code ? '✓' : l.code}</span>
             </button>
           ))}
 
-          <div className="border-t border-jungle-800" />
+          <div className="border-t border-moss/15" />
 
           <button role="menuitem" onClick={() => { setOpen(false); onLeave() }} className={itemClass}>
             <span className="w-4 text-center">⎋</span>

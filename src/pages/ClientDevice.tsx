@@ -85,34 +85,31 @@ export default function ClientDevice() {
 
   if (loadingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-jungle-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-canopy-700 to-canopy-800">
         <Spinner size="lg" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-jungle-950 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-canopy-700 to-canopy-800 text-sage-50 font-sans flex flex-col">
       <ConnectionBanner />
       {/* Header */}
-      <header className="relative flex items-center justify-between px-4 py-3 border-b border-jungle-800 bg-jungle-900/60">
+      <header className="relative flex items-start justify-between px-5 py-4 border-b border-brass-400/15 bg-canopy-900/50">
         <div>
-          <h1 className="font-cinzel text-gold-300 font-bold text-base">JUMANJI</h1>
-          <p className="text-jungle-200 text-xs font-cinzel uppercase tracking-wider">
+          <h1 className="font-cinzel text-brass-400 font-bold text-xl leading-none">JUMANJI</h1>
+          <p className="text-sage-500 text-[11px] font-cinzel uppercase tracking-[0.2em] mt-1.5">
             {t('header.session')} {sessionCode}
           </p>
         </div>
-        {/* Signal icon — centered */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <SignalIcon quality={connectionQuality} />
-        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3.5 pt-0.5">
+          <SignalIcon quality={connectionQuality} />
           <button
             onClick={tutorial.restart}
             aria-label={t('common.help')}
             title={t('common.help')}
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-jungle-700 text-jungle-200 hover:text-jungle-50 hover:bg-jungle-800 text-sm font-cinzel transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-sage-300/40 text-sage-300 hover:text-sage-50 hover:border-sage-300 text-sm font-cinzel transition-colors"
           >
             ?
           </button>
@@ -122,54 +119,60 @@ export default function ClientDevice() {
 
       {/* Sent feedback toast */}
       {sendFeedback && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-jungle-700 border border-jungle-400 border-glow-green rounded-lg px-4 py-2 font-cinzel text-jungle-100 text-sm animate-slide-up shadow-glow_green">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-frond-from border border-brass-400/40 rounded-lg px-4 py-2 font-cinzel text-parchment text-sm animate-slide-up shadow-lg">
           {t('toast.sent')}
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto px-[22px] py-6 flex flex-col gap-6">
         {selectedCollection ? (
           /* ── Collection page ── */
-          <div className="animate-slide-up flex flex-col gap-4">
+          <div className="animate-slide-up flex flex-col gap-5">
             <button
               onClick={() => setSelectedCollection(null)}
-              className="self-start flex items-center gap-2 text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
+              className="self-start -ml-1 flex items-center gap-2 text-sage-300 hover:text-sage-50 text-sm font-medium uppercase tracking-[0.1em] px-2 py-1.5 rounded transition-colors"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
               {t('client.back')}
             </button>
             <div>
-              <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">{t('client.activeCollection')}</p>
-              <span className="text-gold-300 font-cinzel text-xl font-semibold">{selectedCollection.name}</span>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-sage-500 mb-1.5">{t('client.activeCollection')}</p>
+              <span className="text-brass-400 font-cinzel text-[26px] font-bold leading-tight">{selectedCollection.name}</span>
             </div>
             <SelectionModePanel collection={selectedCollection} onSend={handleSend} />
           </div>
         ) : (
           /* ── Collections list ── */
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3.5">
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <h2 className="font-cinzel text-jungle-100 text-sm uppercase tracking-widest">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-cinzel text-sage-200 text-[15px] font-semibold uppercase tracking-[0.16em]">
                   {t('list.title')}
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {editMode && (
-                    <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
+                    <button
+                      onClick={() => setShowNewCollectionModal(true)}
+                      className="px-4 py-2 rounded-xl border border-brass-400/45 text-brass-400 font-cinzel font-semibold text-[13px] hover:bg-brass-400/10 transition-colors"
+                    >
                       {t('common.newBtn')}
-                    </Button>
+                    </button>
                   )}
-                  <Button
-                    variant={editMode ? 'primary' : 'ghost'}
-                    size="sm"
+                  <button
                     onClick={() => setEditMode((v) => !v)}
+                    className={
+                      editMode
+                        ? 'px-4 py-2 rounded-xl bg-gradient-to-b from-brass-300 to-brass-500 text-canopy-800 font-cinzel font-bold text-[13px] shadow-[0_6px_16px_-6px_rgba(230,182,79,0.6)] transition-colors'
+                        : 'px-4 py-2 rounded-xl border border-brass-400/40 text-brass-400 font-cinzel font-semibold text-[14px] hover:bg-brass-400/10 transition-colors'
+                    }
                   >
                     {editMode ? t('common.doneBtn') : t('common.editBtn')}
-                  </Button>
+                  </button>
                 </div>
               </div>
-              <p className="text-jungle-200 text-sm">
+              <p className="text-sage-400 text-[15px] leading-relaxed">
                 {editMode ? t('list.helperEdit') : t('list.helperNormal')}
               </p>
             </div>
@@ -181,7 +184,7 @@ export default function ClientDevice() {
             )}
 
             {!collectionsLoading && collections.length === 0 && (
-              <p className="text-jungle-200 text-sm text-center py-6 font-cinzel">
+              <p className="text-sage-400 text-sm text-center py-6 font-cinzel">
                 {t('list.empty')}
               </p>
             )}
@@ -209,12 +212,12 @@ export default function ClientDevice() {
       </div>
 
       {/* Clear screen footer */}
-      <div className="sticky bottom-0 z-10 px-4 py-3 bg-jungle-950/90 backdrop-blur-sm border-t border-jungle-800">
+      <div className="sticky bottom-0 z-10 px-[22px] py-4 bg-canopy-900/50 backdrop-blur-sm border-t border-brass-400/15">
         <button
           onClick={() => clearDisplay()}
-          className="w-full py-3 rounded border border-gold-800 bg-gold-950/40 hover:bg-gold-900/20 hover:border-gold-600 text-gold-400 hover:text-gold-300 text-sm font-cinzel uppercase tracking-widest transition-colors active:scale-95"
+          className="w-full py-4 rounded-2xl border border-brass-400/45 bg-gradient-to-b from-brass-400/[0.12] to-brass-400/[0.04] hover:from-brass-400/20 hover:to-brass-400/[0.08] text-brass-400 text-base font-cinzel font-semibold tracking-[0.08em] transition-colors active:scale-[0.98]"
         >
-          🧹 {t('footer.clear')}
+          🧹&nbsp; {t('footer.clear')}
         </button>
       </div>
 

@@ -10,6 +10,11 @@ import '@fontsource/cinzel-decorative/400.css'
 import '@fontsource/cinzel-decorative/700.css'
 import '@fontsource/cinzel-decorative/900.css'
 import '@fontsource/forum/400.css'
+// Instrument Sans — client UI body font (mockup restyle)
+import '@fontsource/instrument-sans/400.css'
+import '@fontsource/instrument-sans/500.css'
+import '@fontsource/instrument-sans/600.css'
+import '@fontsource/instrument-sans/400-italic.css'
 import './styles/globals.css'
 import App from './App'
 
