@@ -26,24 +26,41 @@ export async function isInternetReachable(timeoutMs = 2500): Promise<boolean> {
 }
 
 /**
- * Subscribe to connectivity changes. Fires with the latest reachability whenever
- * the browser's online/offline events fire (each re-confirmed with a probe).
- * Returns an unsubscribe function.
+ * Subscribe to connectivity *changes*. The handler fires only when reachability
+ * actually flips (deduped), so callers get clean transition events.
+ *
+ * Uses both the browser online/offline events AND periodic polling: an internet
+ * outage at the router (WAN down) while Wi-Fi stays up does NOT fire the browser
+ * events (`navigator.onLine` stays true), so polling is required to notice the
+ * drop and the later recovery.
  */
-export function onConnectivityChange(handler: (online: boolean) => void): () => void {
+export function onConnectivityChange(
+  handler: (online: boolean) => void,
+  pollMs = 20000,
+): () => void {
   let cancelled = false
-  const recheck = async () => {
+  let last: boolean | null = null
+
+  const emit = (value: boolean) => {
+    if (cancelled || value === last) return
+    last = value
+    handler(value)
+  }
+  const check = async () => {
     const online = await isInternetReachable()
-    if (!cancelled) handler(online)
+    emit(online)
   }
-  const onOnline = () => void recheck()
-  const onOffline = () => {
-    if (!cancelled) handler(false)
-  }
+  const onOnline = () => void check()
+  const onOffline = () => emit(false)
+
   window.addEventListener('online', onOnline)
   window.addEventListener('offline', onOffline)
+  const interval = setInterval(() => void check(), pollMs)
+  void check() // seed the initial state
+
   return () => {
     cancelled = true
+    clearInterval(interval)
     window.removeEventListener('online', onOnline)
     window.removeEventListener('offline', onOffline)
   }
