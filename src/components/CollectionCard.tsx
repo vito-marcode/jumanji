@@ -8,6 +8,7 @@ import type { Collection } from '../types'
 interface CollectionCardProps {
   collection: Collection
   isSelected: boolean
+  editMode: boolean
   onSelect: () => void
   onDelete: () => void
   onAddOption: (text: string) => Promise<void>
@@ -18,6 +19,7 @@ interface CollectionCardProps {
 export function CollectionCard({
   collection,
   isSelected,
+  editMode,
   onSelect,
   onDelete,
   onAddOption,
@@ -76,24 +78,28 @@ export function CollectionCard({
         <div className="flex items-center justify-between gap-2">
           <button
             className="flex-1 text-left flex items-center gap-2"
-            onClick={() => { setExpanded((v) => !v); onSelect() }}
+            onClick={() => { if (editMode) setExpanded((v) => !v); else onSelect() }}
           >
-            <span className="text-jungle-200 text-sm shrink-0 w-4 text-center">{expanded ? '▲' : '▼'}</span>
+            {editMode && (
+              <span className="text-jungle-200 text-sm shrink-0 w-4 text-center">{expanded ? '▲' : '▼'}</span>
+            )}
             <span className="font-cinzel text-jungle-100 font-semibold">{collection.name}</span>
             <span className="text-xs text-jungle-200">{optionCount} option{optionCount !== 1 ? 's' : ''}</span>
           </button>
 
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => setConfirmDeleteCollection(true)}
-            title="Delete collection"
-          >
-            ✕
-          </Button>
+          {editMode && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirmDeleteCollection(true)}
+              title="Delete collection"
+            >
+              ✕
+            </Button>
+          )}
         </div>
 
-        {expanded && (
+        {editMode && expanded && (
           <div className="mt-3 flex flex-col gap-2">
             {(collection.options ?? []).map((opt) => (
               <div key={opt.id} className="flex items-start gap-2 group">

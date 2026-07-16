@@ -45,6 +45,7 @@ export default function ClientDevice() {
   const { sessionCode, sessionId, loadingSession } = useTransport()
 
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [editMode, setEditMode] = useState(false)
   const [showNewCollectionModal, setShowNewCollectionModal] = useState(false)
   const [newCollectionName, setNewCollectionName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -135,73 +136,83 @@ export default function ClientDevice() {
       )}
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
-        {/* Active collection panel */}
-        {selectedCollection && (
-          <div className="animate-slide-up flex flex-col gap-3">
+        {selectedCollection ? (
+          /* ── Collection page ── */
+          <div className="animate-slide-up flex flex-col gap-4">
+            <button
+              onClick={() => setSelectedCollection(null)}
+              className="self-start flex items-center gap-2 text-jungle-200 hover:text-jungle-50 text-sm font-cinzel uppercase tracking-widest px-3 py-2 rounded hover:bg-jungle-800 transition-colors"
+            >
+              ← Back to collections
+            </button>
             <div>
               <p className="text-xs font-cinzel uppercase tracking-widest text-jungle-100 mb-1">Active Collection</p>
-              <div className="flex items-center gap-2">
-                <span className="text-gold-300 font-cinzel text-base font-semibold">{selectedCollection.name}</span>
-                <button
-                  onClick={() => setSelectedCollection(null)}
-                  className="text-jungle-200 hover:text-jungle-50 text-sm px-2 py-1 rounded hover:bg-jungle-800 transition-colors"
-                >
-                  (change)
-                </button>
-              </div>
+              <span className="text-gold-300 font-cinzel text-xl font-semibold">{selectedCollection.name}</span>
             </div>
             <SelectionModePanel collection={selectedCollection} onSend={handleSend} />
           </div>
-        )}
-
-        {/* Collections list */}
-        <div className={`flex flex-col gap-3 ${selectedCollection ? 'pt-8 border-t border-jungle-800' : ''}`}>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="font-cinzel text-jungle-100 text-sm uppercase tracking-widest">
-                Your Collections
-              </h2>
-              <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
-                + New
-              </Button>
+        ) : (
+          /* ── Collections list ── */
+          <div className="flex flex-col gap-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-cinzel text-jungle-100 text-sm uppercase tracking-widest">
+                  Your Collections
+                </h2>
+                <div className="flex items-center gap-2">
+                  {editMode && (
+                    <Button variant="primary" size="sm" onClick={() => setShowNewCollectionModal(true)}>
+                      + New
+                    </Button>
+                  )}
+                  <Button
+                    variant={editMode ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setEditMode((v) => !v)}
+                  >
+                    {editMode ? '✓ Done' : '✎ Edit'}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-jungle-200 text-sm">
+                {editMode
+                  ? 'Edit mode: add or remove collections and their options.'
+                  : 'Tap a collection to open it, then pick an option to send.'}
+              </p>
             </div>
-            <p className="text-jungle-200 text-sm">
-              {selectedCollection
-                ? 'Tap another collection to switch the active one.'
-                : 'Tap a collection to activate it, then pick an option to send.'}
-            </p>
+
+            {collectionsLoading && (
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            )}
+
+            {!collectionsLoading && collections.length === 0 && (
+              <p className="text-jungle-200 text-sm text-center py-6 font-cinzel">
+                No collections yet. Create one to begin.
+              </p>
+            )}
+
+            {collections.map((col) => (
+              <CollectionCard
+                key={col.id}
+                collection={col}
+                isSelected={false}
+                editMode={editMode}
+                onSelect={() => { setSelectedCollection(col); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                onDelete={() => {
+                  deleteCollection(col.id)
+                  if (selectedCollection?.id === col.id) setSelectedCollection(null)
+                }}
+                onAddOption={async (text) => {
+                  await addOption(col.id, text)
+                }}
+                onDeleteOption={(optId) => deleteOption(col.id, optId)}
+                onUpdateOption={async (optId, text) => { await updateOption(col.id, optId, text) }}
+              />
+            ))}
           </div>
-
-          {collectionsLoading && (
-            <div className="flex justify-center py-6">
-              <Spinner />
-            </div>
-          )}
-
-          {!collectionsLoading && collections.length === 0 && (
-            <p className="text-jungle-200 text-sm text-center py-6 font-cinzel">
-              No collections yet. Create one to begin.
-            </p>
-          )}
-
-          {collections.map((col) => (
-            <CollectionCard
-              key={col.id}
-              collection={col}
-              isSelected={selectedCollection?.id === col.id}
-              onSelect={() => { setSelectedCollection(col); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-              onDelete={() => {
-                deleteCollection(col.id)
-                if (selectedCollection?.id === col.id) setSelectedCollection(null)
-              }}
-              onAddOption={async (text) => {
-                await addOption(col.id, text)
-              }}
-              onDeleteOption={(optId) => deleteOption(col.id, optId)}
-              onUpdateOption={async (optId, text) => { await updateOption(col.id, optId, text) }}
-            />
-          ))}
-        </div>
+        )}
       </div>
 
       {/* Clear screen footer */}
