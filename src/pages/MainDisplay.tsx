@@ -210,12 +210,37 @@ export default function MainDisplay() {
     }
   }, [headerVisible])
 
-  // On a return visit, try to enter fullscreen automatically. Browsers reject
-  // requestFullscreen() without a preceding user gesture, so this only succeeds in
-  // kiosk/PWA/permission-granted contexts; elsewhere it fails silently (stays windowed).
+  // On a return visit, enter fullscreen automatically.
+  //  - Installed PWA with manifest display:'fullscreen' already launches chromeless,
+  //    so there's nothing to do (the Fullscreen API isn't involved).
+  //  - In a browser tab, requestFullscreen() needs a user gesture: we attempt it on load
+  //    (works if a transient activation carried over from the click that navigated here),
+  //    then fall back to entering fullscreen on the very first user gesture.
   useEffect(() => {
-    if (!isReturnVisit || document.fullscreenElement) return
-    document.documentElement.requestFullscreen?.().catch(() => {})
+    if (!isReturnVisit) return
+    if (window.matchMedia?.('(display-mode: fullscreen)').matches) return
+
+    const goFullscreen = () => {
+      if (document.fullscreenElement) return
+      document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+
+    const cleanup = () => {
+      window.removeEventListener('pointerdown', onFirstGesture)
+      window.removeEventListener('keydown', onFirstGesture)
+      window.removeEventListener('touchstart', onFirstGesture)
+      document.removeEventListener('fullscreenchange', onFsChange)
+    }
+    const onFirstGesture = () => { goFullscreen(); cleanup() }
+    const onFsChange = () => { if (document.fullscreenElement) cleanup() }
+
+    goFullscreen() // try immediately in case activation is still available
+    window.addEventListener('pointerdown', onFirstGesture)
+    window.addEventListener('keydown', onFirstGesture)
+    window.addEventListener('touchstart', onFirstGesture)
+    document.addEventListener('fullscreenchange', onFsChange)
+
+    return cleanup
   }, [isReturnVisit])
 
   useEffect(() => {

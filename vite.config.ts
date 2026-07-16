@@ -16,7 +16,11 @@ export default defineConfig({
         lang: 'it',
         theme_color: '#030a04',
         background_color: '#030a04',
-        display: 'standalone',
+        // Launch the installed PWA truly fullscreen (no browser/OS chrome), no user
+        // gesture needed. display_override lets browsers that don't support 'fullscreen'
+        // display mode fall back to standalone, then minimal-ui.
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone', 'minimal-ui'],
         orientation: 'any',
         start_url: '/',
         scope: '/',
