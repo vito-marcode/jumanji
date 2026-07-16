@@ -40,7 +40,7 @@ export function TransportProvider({ role, children }: { role: TransportRole; chi
   const [loadingSession, setLoadingSession] = useState(true)
   const [transport, setTransport] = useState<Transport | null>(null)
 
-  const transportRef = useRef<Transport | null>(null)
+  const transportRef = useRef<OrchestratedTransport | null>(null)
   const builtOnlineRef = useRef<boolean | null>(null)
   const sessionIdRef = useRef<string | null>(null)
   sessionIdRef.current = sessionId
@@ -98,17 +98,31 @@ export function TransportProvider({ role, children }: { role: TransportRole; chi
       build(reachable)
     })()
 
-    // React to connectivity changes. Only act on offline→online recovery: rebuild
-    // so pairing (which needs signaling) can happen once the network is back —
-    // without a manual refresh. Never rebuild on online→offline: an established
-    // P2P link runs over the LAN and must survive the internet dropping.
-    const unsub = onConnectivityChange(async (nowOnline) => {
+    // React to connectivity changes. Rebuild on every transition *into* online —
+    // whether the app started offline, or started online and then the internet
+    // dropped and came back (Supabase realtime/signaling doesn't reliably self-heal,
+    // and a WAN-level outage doesn't even fire the browser online/offline events).
+    // Rebuilding re-establishes signaling + heartbeat + fallback; any P2P link
+    // re-pairs via the main's `hello`. Never rebuild on going offline: an
+    // established P2P link runs over the LAN and must survive the drop.
+    let prevOnline: boolean | null = null
+    const unsub = onConnectivityChange((nowOnline) => {
       if (cancelled) return
-      if (!nowOnline || builtOnlineRef.current === true) return
-      if (!sessionIdRef.current) await resolveSession()
-      if (cancelled) return
-      setOnline(true)
-      build(true)
+      const wasOnline = prevOnline
+      prevOnline = nowOnline
+      // Reflect current connectivity in the UI, and let the transport switch the
+      // signal between 'good' (online) and 'p2p' (offline but peer link live)
+      // without tearing anything down.
+      setOnline(nowOnline)
+      transportRef.current?.setOnline(nowOnline)
+      const recovered = wasOnline === false || (wasOnline === null && builtOnlineRef.current !== true)
+      if (!nowOnline || !recovered) return
+      ;(async () => {
+        if (!sessionIdRef.current) await resolveSession()
+        if (cancelled) return
+        setOnline(true)
+        build(true)
+      })()
     })
 
     return () => {
