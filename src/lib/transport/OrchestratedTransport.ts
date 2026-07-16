@@ -27,8 +27,10 @@ export class OrchestratedTransport implements Transport {
   private quality: ConnectionQuality = 'connecting'
   private supabaseQuality: ConnectionQuality = 'connecting'
   private p2pQuality: ConnectionQuality = 'connecting'
+  private currentlyOnline: boolean
 
   constructor({ role, sessionCode, sessionId, online }: OrchestratedOptions) {
+    this.currentlyOnline = online
     if (sessionId) {
       this.supabase = new SupabaseTransport(sessionId, sessionCode)
       this.supabaseQuality = this.supabase.getQuality()
@@ -71,7 +73,9 @@ export class OrchestratedTransport implements Transport {
 
   private recompute() {
     let q: ConnectionQuality
-    if (this.webrtc?.isReady()) q = 'good'
+    // P2P live: 'good' when the internet is also up, 'p2p' (half bars, yellow)
+    // when we're offline but the peer link keeps the session running.
+    if (this.webrtc?.isReady()) q = this.currentlyOnline ? 'good' : 'p2p'
     else if (this.supabase) q = this.supabaseQuality
     else if (this.webrtc) q = this.p2pQuality
     else q = 'disconnected'
@@ -79,6 +83,13 @@ export class OrchestratedTransport implements Transport {
       this.quality = q
       this.qualityHandlers.forEach((h) => h(q))
     }
+  }
+
+  /** Update the current internet status (without tearing down a live P2P link). */
+  setOnline(online: boolean) {
+    if (online === this.currentlyOnline) return
+    this.currentlyOnline = online
+    this.recompute()
   }
 
   /** True once a P2P data channel is open. */

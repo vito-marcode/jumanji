@@ -4,7 +4,12 @@
 // orchestrator that picks between them and falls back. See ./SupabaseTransport,
 // ./WebRTCTransport and ./OrchestratedTransport.
 
-export type ConnectionQuality = 'connecting' | 'good' | 'poor' | 'disconnected'
+// 'good'         — connected (full bars, green)
+// 'p2p'          — no internet, but a WebRTC peer link is live (half bars, yellow)
+// 'poor'         — degraded (yellow)
+// 'connecting'   — negotiating
+// 'disconnected' — no connection (no bars, red)
+export type ConnectionQuality = 'connecting' | 'good' | 'p2p' | 'poor' | 'disconnected'
 
 // The only payload that crosses devices. `text === ''` means "clear the display"
 // (this convention predates the transport layer and is relied on by MainDisplay).

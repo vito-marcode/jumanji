@@ -40,7 +40,7 @@ export function TransportProvider({ role, children }: { role: TransportRole; chi
   const [loadingSession, setLoadingSession] = useState(true)
   const [transport, setTransport] = useState<Transport | null>(null)
 
-  const transportRef = useRef<Transport | null>(null)
+  const transportRef = useRef<OrchestratedTransport | null>(null)
   const builtOnlineRef = useRef<boolean | null>(null)
   const sessionIdRef = useRef<string | null>(null)
   sessionIdRef.current = sessionId
@@ -110,6 +110,11 @@ export function TransportProvider({ role, children }: { role: TransportRole; chi
       if (cancelled) return
       const wasOnline = prevOnline
       prevOnline = nowOnline
+      // Reflect current connectivity in the UI, and let the transport switch the
+      // signal between 'good' (online) and 'p2p' (offline but peer link live)
+      // without tearing anything down.
+      setOnline(nowOnline)
+      transportRef.current?.setOnline(nowOnline)
       const recovered = wasOnline === false || (wasOnline === null && builtOnlineRef.current !== true)
       if (!nowOnline || !recovered) return
       ;(async () => {
